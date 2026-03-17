@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import * as CSG from '../libs/three-bvh-csg.js'
 
 class Chimenea extends THREE.Object3D {
-
+  //holaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   constructor(gui, titleGui) {
     super();
 
