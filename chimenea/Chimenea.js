@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import * as CSG from '../libs/three-bvh-csg.js'
 
 class Chimenea extends THREE.Object3D {
-  //holaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa je
+
   constructor(gui, titleGui) {
     super();
 
@@ -92,14 +92,14 @@ class Chimenea extends THREE.Object3D {
       .onChange((value) => this.setAngulo(-value));
   }
 
-// --- NUEVO: CREACIÓN DEL FUEGO LOW POLY ---
+
   createFuego(tamano) {
     this.fuego = new THREE.Object3D();
-    this.llamas = []; // Array para guardar las llamas y animarlas luego
+    this.llamas = []; // Array para guardar las llamas 
 
-    // 1. Creamos unos troncos cruzados muy sencillos
+    // Creacion de troncos 
     var geoTronco = new THREE.CylinderGeometry(tamano * 0.04, tamano * 0.04, tamano * 0.3, 5);
-    var matTronco = new THREE.MeshStandardMaterial({ color: 0x4A2F1D, flatShading: true });
+    var matTronco = new THREE.MeshStandardMaterial({ color: 0x4A2F1D });
 
     var tronco1 = new THREE.Mesh(geoTronco, matTronco);
     tronco1.rotation.z = Math.PI / 2;
@@ -112,7 +112,7 @@ class Chimenea extends THREE.Object3D {
     this.fuego.add(tronco1);
     this.fuego.add(tronco2);
 
-    // 2. Creamos las 3 llamas (roja, naranja, amarilla)
+    // Creamos las 3 llamas (roja, naranja, amarilla)
     const colores = [0xff0000, 0xff6600, 0xffcc00];
     const alturas = [0.4, 0.3, 0.2];
     const radios = [0.15, 0.1, 0.06];
@@ -125,32 +125,26 @@ class Chimenea extends THREE.Object3D {
 
       let matLlama = new THREE.MeshStandardMaterial({
         color: colores[i],
-        emissive: colores[i],       
-        emissiveIntensity: 0.8,     // Subimos un poco el brillo propio
-        flatShading: true,          
-        transparent: true,
-        opacity: 0.6,               // Bajamos la opacidad para que se mezclen mejor
-        depthWrite: false,          // ¡CLAVE! Permite ver los conos interiores
-        blending: THREE.AdditiveBlending // ¡MAGIA! Suma los colores para crear un núcleo brillante
+        // emissive: colores[i],       
+        opacity: 0.7,
+        depthWrite: false,          // Permite ver los conos interiores
+        blending: THREE.AdditiveBlending //  Suma los colores para crear un núcleo brillante
       });
 
       let llama = new THREE.Mesh(geoLlama, matLlama);
-      llama.rotation.y = Math.random() * Math.PI; 
-      
-      // Separamos las llamas un poquitín hacia arriba para que la amarilla asome mejor
-      llama.position.y = i * (tamano * 0.03);
+      llama.rotation.y = Math.random() * Math.PI;
 
       this.fuego.add(llama);
 
       this.llamas.push({
         mesh: llama,
-        velocidad: (Math.random() * 0.05) + 0.02,
-        desfase: Math.random() * 10
+        velocidad: Math.random() * 0.005,
+        desfase: Math.random()
       });
     }
 
-    // Colocamos todo el conjunto de fuego dentro del hueco de la chimenea
-    this.fuego.position.set(0, tamano *0.01, 0.1 * tamano);
+    // Colocamos el fuego dentro del hueco de la chimenea
+    this.fuego.position.set(0, tamano * 0.01, 0.1 * tamano);
     this.add(this.fuego);
   }
 
