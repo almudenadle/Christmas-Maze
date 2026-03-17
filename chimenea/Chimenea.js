@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import * as CSG from '../libs/three-bvh-csg.js'
 
 class Chimenea extends THREE.Object3D {
-  //holaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  //holaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa je
   constructor(gui, titleGui) {
     super();
 
@@ -150,7 +150,7 @@ class Chimenea extends THREE.Object3D {
     }
 
     // Colocamos todo el conjunto de fuego dentro del hueco de la chimenea
-    this.fuego.position.set(0, tamano / 6, 0.3 * tamano);
+    this.fuego.position.set(0, tamano *0.01, 0.1 * tamano);
     this.add(this.fuego);
   }
 
