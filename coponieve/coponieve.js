@@ -1,15 +1,14 @@
-import * as THREE from '../../libs/three.module.js'
+import * as THREE from '../libs/three.module.js'
 
 class coponieve extends THREE.Object3D{
     constructor(){
         super();
 
         const base = this.createBaseCopoNieve();
-        const ramas = this.createRamaCopoNieve();
+        const ramas = this.createRamas();
 
         this.add(base)
         this.add(ramas)
-
         // Escalar para que no sea gigante
         this.scale.set(0.1, 0.1, 0.1)
     }
@@ -76,44 +75,36 @@ class coponieve extends THREE.Object3D{
     }
 
     
-    createRamasCopoNieve(){
-        const branch = new THREE.Group();
+    createRamas(){
+        const branches = new THREE.Group();
 
-        const geometry = new THREE.BoxGeometry(0.1,2,0.1);
-        const material = new THREE.MeshStandardMaterial({
+        const material_branches = new THREE.MeshStandardMaterial({
             color: 0xaaddff,
             metalness: 0.3,
             roughness: 0.2,
             emissive: 0x112244
-        });
+        })
 
-        const base = new THREE.Mesh(geometry,material);
-        branch.add(base)
+        const geometry_branches = new THREE.BoxGeometry(0.2,2,0.2);
+        
+        const r = 1;
 
-        const branch_1 = new THREE.Mesh(geometry,material);
-        branch_1.rotation.z = Math.PI/6;
-        branch_1.position.y = 1;
+        for(let i = 0; i <= 7; i++){
+            const angle = (i * Math.PI)/(4);
 
-        const branch_2 = new THREE.Mesh(geometry,material);
-        branch_2.rotation.z = -Math.PI/6;
-        branch_2.position.y = -1;
+            const x = r * Math.cos(angle);
+            const y = r * Math.sin(angle);
 
-        branch.add(branch_1);
-        branch.add(branch_2);
+            const b1 = new THREE.Mesh(geometry_branches,material_branches);
+            b1.position.set(x,y,0.05);
+            b1.rotation.z = angle + Math.PI/6;
+            
+            const b2 = new THREE.Mesh(geometry_branches,material_branches);
+            b2.position.set(x,y,0.05);
+            b2.rotation.z = angle - Math.PI/6;
 
-        return branch;
-    }
-
-    createRamaCopoNieve(){
-        const branches = new THREE.Group();
-
-        for(let i=0;i<6;i++){
-
-            const branch = this.createRamasCopoNieve();
-
-            branch.rotation.z = i * Math.PI/3;
-
-            branches.add(branch);
+            branches.add(b1);
+            branches.add(b2);
         }
 
         return branches;
