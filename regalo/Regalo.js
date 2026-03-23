@@ -3,8 +3,13 @@ import * as THREE from '../libs/three.module.js'
 import * as CSG from '../libs/three-bvh-csg.js'
 
 class Regalo extends THREE.Object3D{
-    constructor(){
+    constructor(gui, titleGui){
         super();
+
+        /*
+        Vamos a crear el Gui para el regalo.
+        */
+       this.createGUI(gui,titleGui);
 
         var tamano = 0.1;   // Las unidades son metros
 
@@ -12,7 +17,11 @@ class Regalo extends THREE.Object3D{
         
         this.add(regalo);
     }  
-
+    /**
+     * Se encarga de unir todos los componentes con los que conseguir crear el regalo
+     * @param {*} tamano 
+     * @returns 
+     */
     createRegalo(tamano){
         var caja = this.createContornoCaja(tamano);
         var cinta_1 = this.createContornoCintas(tamano);
@@ -37,11 +46,24 @@ class Regalo extends THREE.Object3D{
         return resultado;
     }
 
+
+    /**
+     * Sirve para crear los brushes de todo, sin necesidad de escribirlo constantemente
+     * @param {*} geometria 
+     * @param {*} material 
+     * @returns 
+     */
     crearBrush(geometria,material){
         var brush = new CSG.Brush(geometria,material);
         return brush;
     }
 
+
+    /**
+     * Creamos contorno de la caja
+     * @param {*} tamano 
+     * @returns 
+     */
     createContornoCaja(tamano){
         const geometria_caja = new THREE.BoxGeometry(tamano*0.4,tamano*0.4,tamano*0.4);
         const material_caja = new THREE.MeshStandardMaterial({
@@ -54,6 +76,11 @@ class Regalo extends THREE.Object3D{
         return caja;
     }
 
+    /**
+     * Para el contorno de la cinta.
+     * @param {*} tamano 
+     * @returns 
+     */
     createContornoCintas(tamano){
         const geometria_cintas = new THREE.BoxGeometry(tamano*0.41,tamano*0.41,tamano*0.05);
         const material_cintas = new THREE.MeshStandardMaterial({
@@ -66,6 +93,11 @@ class Regalo extends THREE.Object3D{
         return cinta;
     }
 
+    /**
+     * Creamos el lazo, nos permite definir la forma.
+     * @param {*} tamano 
+     * @returns 
+     */
     createLazo(tamano){
         //Vamos a aplicar extrusión:
         const shape = new THREE.Shape();
@@ -104,7 +136,22 @@ class Regalo extends THREE.Object3D{
 
         return lazo;
     }
-   
+    
+    /**
+     * No hace nada.
+     * @param {*} gui 
+     * @param {*} titleGui 
+     */
+    createGUI(gui,titleGui){
+        this.guiControls = {
+            rotacion: 0
+        }
+        var folder = gui.addFolder(titleGui);
+        folder.add(this.guiControls, 'rotacion', -0.125, 0.2, 0.001)
+        .name('Apertura : ')
+        .onChange((value) => this.setRotationFromAxisAngle(-value));
+    }
+
     update(){
 
     }
