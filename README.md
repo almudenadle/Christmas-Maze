@@ -7,7 +7,7 @@ git push -u origin chimenea
 
 ## Pick-Ups
 - [ ] Chimenea -> Extrusión + CSG
-- [ ] Regalo -> Extrusión + CSG
+- [X] Regalo -> Extrusión + CSG  //He hecho el modelo básico del regalo, si quieres alguna mejor dimelo y lo intento!!
 - [ ] Copo de nieve ¿Llave? -> Extrusión
 - [ ] Reno -> ??
 - [ ] Bastón de Caramelo -> ¿Barrido o revolución?
