@@ -6,9 +6,13 @@ class coponieve extends THREE.Object3D{
 
         const base = this.createBaseCopoNieve();
         const ramas = this.createRamas();
+        const cuerpo_llave = this.createCuerpoLlave();
 
-        this.add(base)
-        this.add(ramas)
+        this.add(base);
+        this.add(ramas);
+        this.add(cuerpo_llave);
+
+
         // Escalar para que no sea gigante
         this.scale.set(0.1, 0.1, 0.1)
     }
@@ -16,12 +20,12 @@ class coponieve extends THREE.Object3D{
     createBaseCopoNieve(){
         const shape = new THREE.Shape();
 
-        //Quiero definir un nuevo centro.
+        //Por si quiero definir un nuevo centro
         const cx = 0;
         const cy = 0;
 
         const branches = 7; //Número de ramas que queremos.
-        const r = 1; //Longitud de las ramas del copo de nieve
+        const r = 0.75; //Longitud de las ramas del copo de nieve
 
         for(let i = 0; i <= branches; i++){
             //Calculamos un ángulo de 45 grados.
@@ -42,18 +46,16 @@ class coponieve extends THREE.Object3D{
                 shape.moveTo(cx,cy);
             }
             */
-
             shape.lineTo(x,y);
             shape.moveTo(cx,cy);
-
         }
 
         const extrudeSettings = {
             depth: 0.1,
             bevelEnabled: true,
-            bevelThickness: 0.1, //Profundidad
+            bevelThickness: 0.05, //Profundidad
             bevelSize: 0.15, //Tamaño hacia dentro
-            bevelSegments:2
+            bevelSegments: 2
         }
 
         const geometry = new THREE.ExtrudeGeometry(shape,extrudeSettings);
@@ -108,6 +110,48 @@ class coponieve extends THREE.Object3D{
         }
 
         return branches;
+    }
+
+
+    createCuerpoLlave(){
+        const box = new THREE.Box3().setFromObject(coponieve);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+
+        const center = new THREE.Vector3();
+        box.getCenter(center);
+
+
+        const shape = new THREE.Shape();
+        shape.moveTo(box.max.x,box.max.y);
+        shape.lineTo(box.max.x*0.5,box.max.y*0.6);
+        shape.lineTo(0,11);
+        shape.closePath();
+
+        const path = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0,0,0),
+            new THREE.Vector3(0,7,0)
+        ]);
+
+        const geometry = new THREE.ExtrudeGeometry(shape,{
+            extrudePath: path,
+            depth: 0.1,
+            bevelEnabled: true,
+            bevelThickness: 0.05, //Profundidad
+            bevelSize: 0.15, //Tamaño hacia dentro
+            bevelSegments: 2
+        });
+
+        const material = new THREE.MeshStandardMaterial({
+            color: 0xaaddff,
+            metalness: 0.3,
+            roughness: 0.2,
+            emissive: 0x112244
+        })
+
+        const cuerpo = new THREE.Mesh(geometry,material);
+
+        return cuerpo;
     }
     
 
