@@ -1,5 +1,7 @@
 import * as THREE from '../libs/three.module.js'
 
+import * as CSG from '../libs/three-bvh-csg.js'
+
 class coponieve extends THREE.Object3D{
     constructor(){
         super();
@@ -8,9 +10,8 @@ class coponieve extends THREE.Object3D{
         const ramas = this.createRamas();
         const cuerpo_llave = this.createCuerpoLlave();
 
-        this.add(base);
-        this.add(ramas);
-        this.add(cuerpo_llave);
+        
+        var evaluador = new CSG.Evaluator();
 
 
         // Escalar para que no sea gigante
@@ -114,44 +115,32 @@ class coponieve extends THREE.Object3D{
 
 
     createCuerpoLlave(){
-        const box = new THREE.Box3().setFromObject(coponieve);
-        const size = new THREE.Vector3();
-        box.getSize(size);
+        var points = [];
 
-        const center = new THREE.Vector3();
-        box.getCenter(center);
+        // --- Cuello decorativo ---
+        points.push(new THREE.Vector2(0.2,-4));   // Estrechamiento
+        points.push(new THREE.Vector2(0.3,-4.2)); // Anillo decorativo 1
+        points.push(new THREE.Vector2(0.2,-4.4)); 
 
+        // --- Eje central (el "palo") ---
+        points.push(new THREE.Vector2(0.1,-4.4)); // Grosor del eje
+        points.push(new THREE.Vector2(0.1,-9.0)); // Largo del eje
 
-        const shape = new THREE.Shape();
-        shape.moveTo(box.max.x,box.max.y);
-        shape.lineTo(box.max.x*0.5,box.max.y*0.6);
-        shape.lineTo(0,11);
-        shape.closePath();
+        // --- Punta final ---
+        points.push(new THREE.Vector2(0.2,-9.2)); // Un pequeño tope al final
+        points.push(new THREE.Vector2(0,-9.2));   // Centro para cerrar la malla
 
-        const path = new THREE.CatmullRomCurve3([
-            new THREE.Vector3(0,0,0),
-            new THREE.Vector3(0,7,0)
-        ]);
-
-        const geometry = new THREE.ExtrudeGeometry(shape,{
-            extrudePath: path,
-            depth: 0.1,
-            bevelEnabled: true,
-            bevelThickness: 0.05, //Profundidad
-            bevelSize: 0.15, //Tamaño hacia dentro
-            bevelSegments: 2
-        });
-
-        const material = new THREE.MeshStandardMaterial({
-            color: 0xaaddff,
+        const latheGeometry = new THREE.LatheGeometry(points, 32);
+        const material = new THREE.MeshStandardMaterial({ 
+             color: 0xaaddff,
             metalness: 0.3,
             roughness: 0.2,
             emissive: 0x112244
-        })
+        });
 
-        const cuerpo = new THREE.Mesh(geometry,material);
+        const cuerpoLlave = new THREE.Mesh(latheGeometry, material);
 
-        return cuerpo;
+        return cuerpoLlave;
     }
     
 
