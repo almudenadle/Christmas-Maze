@@ -6,16 +6,40 @@ class coponieve extends THREE.Object3D{
     constructor(){
         super();
 
-        const base = this.createBaseCopoNieve();
-        const ramas = this.createRamas();
-        const cuerpo_llave = this.createCuerpoLlave();
+        this.materialLlave = new THREE.MeshStandardMaterial({
+            color: 0xB5A642,   // Color latón/oro
+            metalness: 0.9,   
+            roughness: 0.35,   
+            emissive: 0x111100 
+        });
 
-        
-        var evaluador = new CSG.Evaluator();
-
-
+        const llave = this.createLlave();
+        this.add(llave);
         // Escalar para que no sea gigante
         this.scale.set(0.1, 0.1, 0.1)
+    }
+
+    createLlave(){
+        var base = this.createBaseCopoNieve();
+        var cuerpo_llave = this.createCuerpoLlave();
+        var sierra = this.createSierraLlave();
+        
+        var evaluador = new CSG.Evaluator();
+        var tmp = evaluador.evaluate(base,cuerpo_llave,CSG.ADDITION);
+        var resultado = evaluador.evaluate(tmp,sierra,CSG.ADDITION);
+
+        return resultado;
+    }
+
+    /**
+     * Sirve para crear los brushes de todo, sin necesidad de escribirlo constantemente
+     * @param {*} geometria 
+     * @param {*} material 
+     * @returns 
+     */
+    crearBrush(geometria,material){
+        var brush = new CSG.Brush(geometria,this.materialLlave);
+        return brush;
     }
 
     createBaseCopoNieve(){
@@ -32,15 +56,14 @@ class coponieve extends THREE.Object3D{
             //Calculamos un ángulo de 45 grados.
             const angle = (i * Math.PI)/(4); 
 
-            /* 
-            Para comprobar el angulo de salida
-            const angle_rads = angle * (180 / Math.PI);
-            console.log(angle_rads);
-            */
-
+            
+            //Para comprobar el angulo de salida
+            //const angle_rads = angle * (180 / Math.PI);
+            //console.log(angle_rads);
+            
             const x = r * Math.cos(angle);
             const y = r * Math.sin(angle);
-            
+
             /*
             Por si quiero mover el eje de (0,0)
             if (i == 0){
@@ -52,7 +75,7 @@ class coponieve extends THREE.Object3D{
         }
 
         const extrudeSettings = {
-            depth: 0.1,
+            depth: 0,
             bevelEnabled: true,
             bevelThickness: 0.05, //Profundidad
             bevelSize: 0.15, //Tamaño hacia dentro
@@ -68,15 +91,11 @@ class coponieve extends THREE.Object3D{
             emissive: 0x112244
         })
 
-        this.mesh = new THREE.Mesh(geometry,material)
-
-        // Centrar la geometría
-        geometry.center()
+        const base_brush = this.crearBrush(geometry,material);
 
         //this.add(this.mesh)
-        return this.mesh;
+        return base_brush;
     }
-
     
     createRamas(){
         const branches = new THREE.Group();
@@ -118,17 +137,17 @@ class coponieve extends THREE.Object3D{
         var points = [];
 
         // --- Cuello decorativo ---
-        points.push(new THREE.Vector2(0.2,-4));   // Estrechamiento
-        points.push(new THREE.Vector2(0.3,-4.2)); // Anillo decorativo 1
-        points.push(new THREE.Vector2(0.2,-4.4)); 
+        points.push(new THREE.Vector2(0,0));   // Estrechamiento
+        points.push(new THREE.Vector2(0.1, -0.2)); // Anillo decorativo 1
+        points.push(new THREE.Vector2(0.1, -0.2)); 
 
         // --- Eje central (el "palo") ---
-        points.push(new THREE.Vector2(0.1,-4.4)); // Grosor del eje
-        points.push(new THREE.Vector2(0.1,-9.0)); // Largo del eje
+        points.push(new THREE.Vector2(0.1, -1.4)); // Grosor del eje
+        points.push(new THREE.Vector2(0.1, -5.0)); // Largo del eje
 
         // --- Punta final ---
-        points.push(new THREE.Vector2(0.2,-9.2)); // Un pequeño tope al final
-        points.push(new THREE.Vector2(0,-9.2));   // Centro para cerrar la malla
+        points.push(new THREE.Vector2(0.2, -5.2)); // Un pequeño tope al final
+        points.push(new THREE.Vector2(0, -5.2));   // Centro para cerrar la malla
 
         const latheGeometry = new THREE.LatheGeometry(points, 32);
         const material = new THREE.MeshStandardMaterial({ 
@@ -138,11 +157,60 @@ class coponieve extends THREE.Object3D{
             emissive: 0x112244
         });
 
-        const cuerpoLlave = new THREE.Mesh(latheGeometry, material);
+        const cuerpo_llave_brush = this.crearBrush(latheGeometry,material);
 
-        return cuerpoLlave;
+        return cuerpo_llave_brush;
     }
     
+    createSierraLlave(){
+        const shape = new THREE.Shape();
+
+        //Lo primero es hacer una forma rectangular. Para ello en función de un punto medio de el cuerpo de la llave.
+        shape.moveTo(0.1,-3.5);
+        shape.lineTo(0.5,-3.5);
+        shape.lineTo(0.5,-4.5);
+        shape.lineTo(0.1,-4.5);
+        shape.lineTo(0.1,-3.5);
+
+        //Ahora vamos a hacerle dos sierras.
+        const sierra1 = new THREE.Shape();
+        sierra1.moveTo(0.5,-3.7);
+        sierra1.lineTo(0.5,-3.9);
+        sierra1.lineTo(0.1,-3.9);
+        sierra1.lineTo(0.1,-3.7);
+        sierra1.lineTo(0.5,-3.7);
+        shape.holes.push(sierra1);
+
+        const sierra2 = new THREE.Shape();
+        sierra2.moveTo(0.5,-4.1);
+        sierra2.lineTo(0.5,-4.3);
+        sierra2.lineTo(0.1,-4.3);
+        sierra2.lineTo(0.1,-4.1);
+        sierra2.lineTo(0.5,-4.1);
+        shape.holes.push(sierra2);
+
+        //Ahora creamos la geometría y el material. Para aplicar la extrusión.
+         const extrudeSettings = {
+            depth: 0,
+            bevelEnabled: true,
+            bevelThickness: 0.05, //Profundidad
+            bevelSize: 0.15, //Tamaño hacia dentro
+            bevelSegments: 2
+        }
+
+        const geometry = new THREE.ExtrudeGeometry(shape,extrudeSettings);
+
+        const material = new THREE.MeshStandardMaterial({
+            color: 0xaaddff,
+            metalness: 0.3,
+            roughness: 0.2,
+            emissive: 0x112244
+        })
+
+        const sierra = this.crearBrush(geometry,material);
+
+        return sierra;
+    }
 
     update() {
         //No se actualiza nada porque no hace nada
