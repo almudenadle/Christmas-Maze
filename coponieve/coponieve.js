@@ -1,5 +1,4 @@
 import * as THREE from '../libs/three.module.js'
-
 import * as CSG from '../libs/three-bvh-csg.js'
 
 class coponieve extends THREE.Object3D{
@@ -7,24 +6,37 @@ class coponieve extends THREE.Object3D{
         super();
 
         this.materialLlave = new THREE.MeshStandardMaterial({
-            color: 0xB5A642,   // Color latón/oro
+            color: 0x0000ff,   // Color latón/oro
             metalness: 0.9,   
             roughness: 0.35,   
             emissive: 0x111100 
         });
 
         const llave = this.createLlave();
+
+        llave.scale.set(0.025,0.025,0.025);
+        llave.position.y = 0.15;
+
         this.add(llave);
-        // Escalar para que no sea gigante
-        this.scale.set(0.1, 0.1, 0.1)
     }
 
     createLlave(){
+        var evaluador = new CSG.Evaluator();
         var base = this.createBaseCopoNieve();
         var cuerpo_llave = this.createCuerpoLlave();
         var sierra = this.createSierraLlave();
+        var ramas = this.createRamas();
         
-        var evaluador = new CSG.Evaluator();
+        /*
+        ramas.children.forEach(rama => {
+            rama.updateMatrixWorld();
+            // Convertimos el Mesh de la rama en un Brush temporal posicionado
+            const ramaBrush = new CSG.Brush(rama.geometry, this.materialLlave);
+            ramaBrush.matrix.copy(rama.matrixWorld);
+            base = evaluador.evaluate(base, ramaBrush, CSG.ADDITION);
+        });
+        */
+
         var tmp = evaluador.evaluate(base,cuerpo_llave,CSG.ADDITION);
         var resultado = evaluador.evaluate(tmp,sierra,CSG.ADDITION);
 
@@ -37,11 +49,16 @@ class coponieve extends THREE.Object3D{
      * @param {*} material 
      * @returns 
      */
-    crearBrush(geometria,material){
+    crearBrush(geometria){
         var brush = new CSG.Brush(geometria,this.materialLlave);
         return brush;
     }
 
+
+    /**
+     * Permite crearnos la base de la estrella.
+     * @returns la base del copo de nieve
+     */
     createBaseCopoNieve(){
         const shape = new THREE.Shape();
 
@@ -49,33 +66,23 @@ class coponieve extends THREE.Object3D{
         const cx = 0;
         const cy = 0;
 
-        const branches = 7; //Número de ramas que queremos.
+        const branches = 8; //Número de ramas que queremos.
         const r = 0.75; //Longitud de las ramas del copo de nieve
+        const angulo = Math.PI/4;
 
         for(let i = 0; i <= branches; i++){
             //Calculamos un ángulo de 45 grados.
-            const angle = (i * Math.PI)/(4); 
+            const angle = i * angulo
 
-            
-            //Para comprobar el angulo de salida
-            //const angle_rads = angle * (180 / Math.PI);
-            //console.log(angle_rads);
-            
             const x = r * Math.cos(angle);
             const y = r * Math.sin(angle);
 
-            /*
-            Por si quiero mover el eje de (0,0)
-            if (i == 0){
-                shape.moveTo(cx,cy);
-            }
-            */
             shape.lineTo(x,y);
             shape.moveTo(cx,cy);
         }
-
+        
         const extrudeSettings = {
-            depth: 0,
+            depth: 0.1,
             bevelEnabled: true,
             bevelThickness: 0.05, //Profundidad
             bevelSize: 0.15, //Tamaño hacia dentro
@@ -84,44 +91,31 @@ class coponieve extends THREE.Object3D{
 
         const geometry = new THREE.ExtrudeGeometry(shape,extrudeSettings);
 
-        const material = new THREE.MeshStandardMaterial({
-            color: 0xaaddff,
-            metalness: 0.3,
-            roughness: 0.2,
-            emissive: 0x112244
-        })
+        const base_brush = this.crearBrush(geometry);
 
-        const base_brush = this.crearBrush(geometry,material);
-
-        //this.add(this.mesh)
         return base_brush;
     }
     
     createRamas(){
         const branches = new THREE.Group();
 
-        const material_branches = new THREE.MeshStandardMaterial({
-            color: 0xaaddff,
-            metalness: 0.3,
-            roughness: 0.2,
-            emissive: 0x112244
-        })
-
         const geometry_branches = new THREE.BoxGeometry(0.2,2,0.2);
         
         const r = 1;
+        const branche = 7;
+        const angulo =  Math.PI/4;
 
-        for(let i = 0; i <= 7; i++){
-            const angle = (i * Math.PI)/(4);
+        for(let i = 0; i <= branche; i++){
+            const angle = i * angulo
 
             const x = r * Math.cos(angle);
             const y = r * Math.sin(angle);
 
-            const b1 = new THREE.Mesh(geometry_branches,material_branches);
+            const b1 = new THREE.Mesh(geometry_branches,this.materialLlave);
             b1.position.set(x,y,0.05);
             b1.rotation.z = angle + Math.PI/6;
             
-            const b2 = new THREE.Mesh(geometry_branches,material_branches);
+            const b2 = new THREE.Mesh(geometry_branches,this.materialLlave);
             b2.position.set(x,y,0.05);
             b2.rotation.z = angle - Math.PI/6;
 
@@ -132,39 +126,42 @@ class coponieve extends THREE.Object3D{
         return branches;
     }
 
-
+    /**
+     * Para hacer el cuerpo de la llave.
+     * @returns El cuerpo de la llave
+     */
     createCuerpoLlave(){
         var points = [];
+        
+        //Vamos a definir los parámetros.
+        const radio = 0.1;
+        const segmento = 0.1;
+        const altura = 5;
 
-        // --- Cuello decorativo ---
-        points.push(new THREE.Vector2(0,0));   // Estrechamiento
-        points.push(new THREE.Vector2(0.1, -0.2)); // Anillo decorativo 1
-        points.push(new THREE.Vector2(0.1, -0.2)); 
+        points.push(new THREE.Vector2(0,0.5));  
+        points.push(new THREE.Vector2(radio, -(segmento+0.1))); 
+        points.push(new THREE.Vector2(radio*1.5, -(segmento+0.1))); 
 
-        // --- Eje central (el "palo") ---
-        points.push(new THREE.Vector2(0.1, -1.4)); // Grosor del eje
-        points.push(new THREE.Vector2(0.1, -5.0)); // Largo del eje
+        points.push(new THREE.Vector2(radio, -1.4));
+        points.push(new THREE.Vector2(radio, -altura)); 
 
         // --- Punta final ---
-        points.push(new THREE.Vector2(0.2, -5.2)); // Un pequeño tope al final
-        points.push(new THREE.Vector2(0, -5.2));   // Centro para cerrar la malla
+        points.push(new THREE.Vector2(radio*1.2, -(altura+0.2))); 
+        points.push(new THREE.Vector2(0, -(altura+0.2)));  
 
         const latheGeometry = new THREE.LatheGeometry(points, 32);
-        const material = new THREE.MeshStandardMaterial({ 
-             color: 0xaaddff,
-            metalness: 0.3,
-            roughness: 0.2,
-            emissive: 0x112244
-        });
 
-        const cuerpo_llave_brush = this.crearBrush(latheGeometry,material);
+        const cuerpo_llave_brush = this.crearBrush(latheGeometry);
 
         return cuerpo_llave_brush;
     }
     
+    /**
+     * Para simular la sierra de la llave.
+     * @returns crea la sierra
+     */
     createSierraLlave(){
         const shape = new THREE.Shape();
-
         //Lo primero es hacer una forma rectangular. Para ello en función de un punto medio de el cuerpo de la llave.
         shape.moveTo(0.1,-3.5);
         shape.lineTo(0.5,-3.5);
@@ -188,26 +185,18 @@ class coponieve extends THREE.Object3D{
         sierra2.lineTo(0.1,-4.1);
         sierra2.lineTo(0.5,-4.1);
         shape.holes.push(sierra2);
-
-        //Ahora creamos la geometría y el material. Para aplicar la extrusión.
+        
          const extrudeSettings = {
-            depth: 0,
+            depth: 0.1,
             bevelEnabled: true,
-            bevelThickness: 0.05, //Profundidad
-            bevelSize: 0.15, //Tamaño hacia dentro
+            bevelThickness: 0.05, 
+            bevelSize: 0.15,
             bevelSegments: 2
         }
 
         const geometry = new THREE.ExtrudeGeometry(shape,extrudeSettings);
 
-        const material = new THREE.MeshStandardMaterial({
-            color: 0xaaddff,
-            metalness: 0.3,
-            roughness: 0.2,
-            emissive: 0x112244
-        })
-
-        const sierra = this.crearBrush(geometry,material);
+        const sierra = this.crearBrush(geometry);
 
         return sierra;
     }
