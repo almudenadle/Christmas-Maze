@@ -1,9 +1,12 @@
 import * as THREE from '../libs/three.module.js'
 import * as CSG from '../libs/three-bvh-csg.js'
+import { GUI } from 'gui'
 
 class coponieve extends THREE.Object3D{
-    constructor(){
+    constructor(gui,titleGui){
         super();
+
+        this.createGui(titleGui);
 
         this.materialLlave = new THREE.MeshStandardMaterial({
             color: 0x0000ff,   // Color latón/oro
@@ -15,7 +18,7 @@ class coponieve extends THREE.Object3D{
         const llave = this.createLlave();
 
         llave.scale.set(0.025,0.025,0.025);
-        llave.position.y = 0.15;
+        llave.position.y = 0;
 
         this.add(llave);
     }
@@ -25,17 +28,11 @@ class coponieve extends THREE.Object3D{
         var base = this.createBaseCopoNieve();
         var cuerpo_llave = this.createCuerpoLlave();
         var sierra = this.createSierraLlave();
-        var ramas = this.createRamas();
-        
-        /*
-        ramas.children.forEach(rama => {
-            rama.updateMatrixWorld();
-            // Convertimos el Mesh de la rama en un Brush temporal posicionado
-            const ramaBrush = new CSG.Brush(rama.geometry, this.materialLlave);
-            ramaBrush.matrix.copy(rama.matrixWorld);
-            base = evaluador.evaluate(base, ramaBrush, CSG.ADDITION);
-        });
-        */
+
+        // updateMatrixWorld obligatorio antes de evaluate
+        base.updateMatrixWorld();
+        cuerpo_llave.updateMatrixWorld();
+        sierra.updateMatrixWorld();
 
         var tmp = evaluador.evaluate(base,cuerpo_llave,CSG.ADDITION);
         var resultado = evaluador.evaluate(tmp,sierra,CSG.ADDITION);
@@ -52,78 +49,53 @@ class coponieve extends THREE.Object3D{
     crearBrush(geometria){
         var brush = new CSG.Brush(geometria,this.materialLlave);
         return brush;
+    } 
+ 
+    // ─── BRUSH ──────────────────────────────────────────────────────────
+ 
+    crearBrush(geometria) {
+        const brush = new CSG.Brush(geometria, this.materialLlave);
+        brush.updateMatrixWorld();
+        return brush;
     }
-
-
-    /**
-     * Permite crearnos la base de la estrella.
-     * @returns la base del copo de nieve
-     */
-    createBaseCopoNieve(){
+ 
+ 
+    // ═══════════════════════════════════════════════════════════════════
+    // TÉCNICA 1 — EXTRUSIÓN: BASE COPO DE NIEVE
+    // Shape con líneas radiales + ExtrudeGeometry
+    // ═══════════════════════════════════════════════════════════════════
+ 
+    createBaseCopoNieve() {
+        const nBranches = this.guiControls.numBrazos;
+        const r         = this.guiControls.longBrazos;
+        const depth     = this.guiControls.depth;
+        const bevel     = this.guiControls.bevel;
+ 
         const shape = new THREE.Shape();
-
-        //Por si quiero definir un nuevo centro
-        const cx = 0;
-        const cy = 0;
-
-        const branches = 8; //Número de ramas que queremos.
-        const r = 0.75; //Longitud de las ramas del copo de nieve
+ 
         const angulo = Math.PI/4;
 
-        for(let i = 0; i <= branches; i++){
-            //Calculamos un ángulo de 45 grados.
+        for(let i = 0; i <= nBranches; i++){
             const angle = i * angulo
 
             const x = r * Math.cos(angle);
             const y = r * Math.sin(angle);
 
-            shape.lineTo(x,y);
-            shape.moveTo(cx,cy);
+            shape.lineTo(x,y)
+            shape.moveTo(0, 0);
         }
-        
+ 
         const extrudeSettings = {
-            depth: 0.1,
-            bevelEnabled: true,
-            bevelThickness: 0.05, //Profundidad
-            bevelSize: 0.15, //Tamaño hacia dentro
-            bevelSegments: 2
-        }
-
-        const geometry = new THREE.ExtrudeGeometry(shape,extrudeSettings);
-
-        const base_brush = this.crearBrush(geometry);
-
-        return base_brush;
-    }
-    
-    createRamas(){
-        const branches = new THREE.Group();
-
-        const geometry_branches = new THREE.BoxGeometry(0.2,2,0.2);
-        
-        const r = 1;
-        const branche = 7;
-        const angulo =  Math.PI/4;
-
-        for(let i = 0; i <= branche; i++){
-            const angle = i * angulo
-
-            const x = r * Math.cos(angle);
-            const y = r * Math.sin(angle);
-
-            const b1 = new THREE.Mesh(geometry_branches,this.materialLlave);
-            b1.position.set(x,y,0.05);
-            b1.rotation.z = angle + Math.PI/6;
-            
-            const b2 = new THREE.Mesh(geometry_branches,this.materialLlave);
-            b2.position.set(x,y,0.05);
-            b2.rotation.z = angle - Math.PI/6;
-
-            branches.add(b1);
-            branches.add(b2);
-        }
-
-        return branches;
+            depth:          depth,
+            bevelEnabled:   true,
+            bevelThickness: 0.05,
+            bevelSize:      bevel,
+            bevelSegments:  2
+        };
+ 
+        const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+ 
+        return this.crearBrush(geometry);
     }
 
     /**
@@ -171,19 +143,19 @@ class coponieve extends THREE.Object3D{
 
         //Ahora vamos a hacerle dos sierras.
         const sierra1 = new THREE.Shape();
-        sierra1.moveTo(0.5,-3.7);
-        sierra1.lineTo(0.5,-3.9);
-        sierra1.lineTo(0.1,-3.9);
-        sierra1.lineTo(0.1,-3.7);
-        sierra1.lineTo(0.5,-3.7);
+        sierra1.moveTo(0.45,-3.7);
+        sierra1.lineTo(0.45,-3.9);
+        sierra1.lineTo(0.15,-3.9);
+        sierra1.lineTo(0.15,-3.7);
+        sierra1.lineTo(0.45,-3.7);
         shape.holes.push(sierra1);
 
         const sierra2 = new THREE.Shape();
-        sierra2.moveTo(0.5,-4.1);
-        sierra2.lineTo(0.5,-4.3);
-        sierra2.lineTo(0.1,-4.3);
-        sierra2.lineTo(0.1,-4.1);
-        sierra2.lineTo(0.5,-4.1);
+        sierra2.moveTo(0.45,-4.1);
+        sierra2.lineTo(0.45,-4.3);
+        sierra2.lineTo(0.15,-4.3);
+        sierra2.lineTo(0.15,-4.1);
+        sierra2.lineTo(0.45,-4.1);
         shape.holes.push(sierra2);
         
          const extrudeSettings = {
@@ -200,6 +172,37 @@ class coponieve extends THREE.Object3D{
 
         return sierra;
     }
+
+
+    createGui(titleGui){
+        var gui = new GUI();
+
+        this.guiControls = {
+            numBrazos: 8,
+            longBrazos: 0.75,
+            depth: 0.15,
+            bevel: 0.15
+        };
+
+        var folder = gui.addFolder(titleGui);
+
+        folder.add(this.guiControls,"numBrazos",4,8,1)
+            .name("Número de Brazos del Copo: ")
+            .onChange(() => this.createLlave());
+
+        folder.add(this.guiControls,"longBrazos",0.5,1.3,0.1)
+            .name("Longitud de los brazos Copo: ")
+            .onChange(() => this.createLlave());
+        
+        folder.add(this.guiControls,"depth",0.05,0.35,0.1)
+            .name("Profundidad: ")
+            .onChange(() => this.createLlave());
+        
+        folder.add(this.guiControls,"bevel",0.03,0.05,0.01)
+            .name("Número de Brazos del Copo: ")
+            .onChange(() => this.createLlave());
+    }
+
 
     update() {
         //No se actualiza nada porque no hace nada

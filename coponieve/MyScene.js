@@ -95,7 +95,7 @@ class MyScene extends THREE.Scene {
     ground.position.y = -0.01;
 
     // Que no se nos olvide añadirlo a la escena, que en este caso es  this
-    this.add(ground);
+    //this.add(ground);
   }
 
   createGUI() {
