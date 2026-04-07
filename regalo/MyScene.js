@@ -22,6 +22,7 @@ class MyScene extends THREE.Scene {
   constructor (myCanvas) { 
     super();
     
+    this.fog = new THREE.FogExp2(0x0a1628, 2); 
     // Lo primero, crear el visualizador, pasándole el lienzo sobre el que realizar los renderizados.
     this.renderer = this.createRenderer(myCanvas);
     
@@ -38,13 +39,14 @@ class MyScene extends THREE.Scene {
     this.createCamera ();
     
     // Un suelo 
-   // this.createGround ();
+    this.createGround ();
     
     // Y unos ejes. Imprescindibles para orientarnos sobre dónde están las cosas
     // Todas las unidades están en metros
     this.axis = new THREE.AxesHelper (0.1);
     this.add (this.axis);
     
+    this.createNieve();
     
     // Por último creamos el modelo.
     // El modelo puede incluir su parte de la interfaz gráfica de usuario. Le pasamos la referencia a 
@@ -84,18 +86,43 @@ class MyScene extends THREE.Scene {
     var geometryGround = new THREE.BoxGeometry (0.5,0.02,0.5);
     
     // El material se hará con una textura de madera
-    var texture = new THREE.TextureLoader().load('../imgs/wood.jpg');
-    var materialGround = new THREE.MeshStandardMaterial ({map: texture});
+    //var texture = new THREE.TextureLoader().load('../imgs/wood.jpg');
+    var materialGround = new THREE.MeshStandardMaterial({
+        color: 0xffffff,      // blanco nieve
+        roughness: 0.95,      // muy rugoso, sin brillo (la nieve no brilla)
+        metalness: 0.0        // nada metálico
+    });
     
     // Ya se puede construir el Mesh
     var ground = new THREE.Mesh (geometryGround, materialGround);
     
     // Todas las figuras se crean centradas en el origen.
     // El suelo lo bajamos la mitad de su altura para que el origen del mundo se quede en su lado superior
-    ground.position.y = -0.01;
+    ground.position.y = -0.03;
     
     // Que no se nos olvide añadirlo a la escena, que en este caso es  this
     this.add (ground);
+  }
+
+  createNieve (n = 500) {
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(n * 3);
+    const vel = new Float32Array(n);
+
+    for (let i = 0; i < n; i++) {
+        pos[i*3]   = (Math.random() - 0.5) * 2;
+        pos[i*3+1] = Math.random() * 1.2;
+        pos[i*3+2] = (Math.random() - 0.5) * 2;
+        vel[i]     = 0.0004 + Math.random() * 0.0008;  // velocidad acorde a tamano=0.1
+    }
+
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('vel',      new THREE.BufferAttribute(vel, 1));
+
+    this.nieve = new THREE.Points(geo,
+        new THREE.PointsMaterial({ color: 0xffffff, size: 0.003, transparent: true, opacity: 0.8 })
+    );
+    this.add(this.nieve);
   }
   
   createGUI () {
@@ -151,6 +178,14 @@ class MyScene extends THREE.Scene {
     this.pointLight.position.set( 2, 3, 1 );
     console.log (this.pointLight);
     this.add (this.pointLight);
+
+    this.goldLight = new THREE.PointLight(0xffcc44, 2.5, 1.5);
+    this.goldLight.position.set(-0.15, 0.18, 0.12);
+    this.add(this.goldLight);
+
+    this.blueLight = new THREE.PointLight(0x4466ff, 1.2, 2.0);
+    this.blueLight.position.set(0.15, 0.05, -0.15);
+    this.add(this.blueLight);
   }
   
   setLightPower (valor) {
@@ -172,7 +207,7 @@ class MyScene extends THREE.Scene {
     var renderer = new THREE.WebGLRenderer();
     
     // Se establece un color de fondo en las imágenes que genera el render
-    renderer.setClearColor(new THREE.Color(0xEEEEEE), 1.0);
+    renderer.setClearColor(new THREE.Color(0x0a1628), 1.0);
     
     // Se establece el tamaño, se aprovecha la totalidad de la ventana del navegador
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -215,6 +250,23 @@ class MyScene extends THREE.Scene {
     
     // Se actualiza el resto del modelo
     this.model.update();
+
+    const t = Date.now() * 0.001;
+
+    // Luces pulsantes
+    if (this.goldLight) this.goldLight.intensity = 2.5 + Math.sin(t * 2.1) * 0.6;
+    if (this.blueLight) this.blueLight.intensity = 1.2 + Math.cos(t * 1.7) * 0.3;
+
+    // Nieve cayendo
+    if (this.nieve) {
+        const pos = this.nieve.geometry.attributes.position.array;
+        const vel = this.nieve.geometry.attributes.vel.array;
+        for (let i = 0; i < vel.length; i++) {
+            pos[i*3+1] -= vel[i];
+            if (pos[i*3+1] < 0) pos[i*3+1] = 1.2;
+        }
+        this.nieve.geometry.attributes.position.needsUpdate = true;
+    }
     
     // Este método debe ser llamado cada vez que queramos visualizar la escena de nuevo.
     // Literalmente le decimos al navegador: "La próxima vez que haya que refrescar la pantalla, llama al método que te indico".

@@ -1,6 +1,7 @@
 import * as THREE from '../libs/three.module.js'
 
 import * as CSG from '../libs/three-bvh-csg.js'
+import { MeshBVH } from '../libs/three-mesh-bvh.js';
 
 class Regalo extends THREE.Object3D{
     constructor(gui, titleGui){
@@ -13,9 +14,25 @@ class Regalo extends THREE.Object3D{
 
         var tamano = 0.1;   // Las unidades son metros
 
-        const regalo = this.createRegalo(tamano);
-        
-        this.add(regalo);
+        const cuerpo = this.createRegalo(tamano);
+        this.add(cuerpo);
+
+        this.articulacionTapa = new THREE.Object3D();
+        this.articulacionTapa.position.set(0,tamano*0.2,-tamano*0.2);
+        this.add(this.articulacionTapa);
+
+        var tapa = this.createTapa(tamano);
+        this.articulacionTapa.add(tapa);
+
+        var cintasTapa = this.createCintasTapa(tamano);
+        this.articulacionTapa.add(cintasTapa);
+
+        this.articulacionLazo = new THREE.Object3D();
+        this.articulacionLazo.position.set(0, tamano *0.05, tamano * 0.2);
+        this.articulacionTapa.add(this.articulacionLazo);
+ 
+        var lazo = this.createLazo(tamano);
+        this.articulacionLazo.add(lazo);
     }  
     /**
      * Se encarga de unir todos los componentes con los que conseguir crear el regalo
@@ -26,22 +43,15 @@ class Regalo extends THREE.Object3D{
         var caja = this.createContornoCaja(tamano);
         var cinta_1 = this.createContornoCintas(tamano);
         var cinta_2 = this.createContornoCintas(tamano);
-        var lazo_1 = this.createLazo(tamano);
-        var lazo_2 = this.createLazo(tamano);
-        
-        //Para realizar los cambios
-        cinta_2.rotation.y = Math.PI / 2;
-        lazo_2.rotation.y = Math.PI;
 
-        //Para actualizar los cambios.
+    
+        cinta_2.rotation.y = Math.PI / 2;
+
         cinta_2.updateMatrixWorld();
-        lazo_2.updateMatrixWorld();
 
         var evaluador = new CSG.Evaluator();
         var tmp = evaluador.evaluate(caja,cinta_1, CSG.ADDITION);
-        var tmp_2 = evaluador.evaluate(tmp,cinta_2,CSG.ADDITION);
-        var tmp_3 = evaluador.evaluate(tmp_2,lazo_1,CSG.ADDITION);
-        var resultado = evaluador.evaluate(tmp_3,lazo_2,CSG.ADDITION);
+        var resultado = evaluador.evaluate(tmp,cinta_2,CSG.ADDITION);
 
         return resultado;
     }
@@ -84,7 +94,7 @@ class Regalo extends THREE.Object3D{
     createContornoCintas(tamano){
         const geometria_cintas = new THREE.BoxGeometry(tamano*0.41,tamano*0.41,tamano*0.05);
         const material_cintas = new THREE.MeshStandardMaterial({
-            color: 0xFF00,
+            color: 0x00CC00,
             roughness: 0.5
         });
         
@@ -99,10 +109,8 @@ class Regalo extends THREE.Object3D{
      * @returns 
      */
     createLazo(tamano){
-        //Vamos a aplicar extrusión:
         const shape = new THREE.Shape();
-        
-        //Hacemos la base donde se situara:
+
         const ancho = tamano * 0.05;
         const grosor = tamano * 0.01;
         shape.moveTo(-ancho/2, -grosor/2);
@@ -111,13 +119,11 @@ class Regalo extends THREE.Object3D{
         shape.lineTo(-ancho/2, grosor/2);
         shape.closePath();
 
-
-        //Definimos el camino que vamos a seguir:
         const camino_lazo = new THREE.CubicBezierCurve3(
-            new THREE.Vector3(0,tamano*0.2,0),
-            new THREE.Vector3(0,tamano*0.4,tamano*0.4),
-            new THREE.Vector3(0,tamano*0.6,0),
-            new THREE.Vector3(0,tamano*0.2,0)
+            new THREE.Vector3(0,0,0),
+            new THREE.Vector3(0,tamano*0.2,tamano*0.2),
+            new THREE.Vector3(0,tamano*0.4,0),
+            new THREE.Vector3(0,0,0)
         );
 
         const extrudeSettings = {
@@ -128,15 +134,57 @@ class Regalo extends THREE.Object3D{
 
         const geometria_lazo = new THREE.ExtrudeGeometry(shape,extrudeSettings);
         const material_lazo = new THREE.MeshStandardMaterial({
-            color: 0xFF00,
+            color: 0x00CC00,
             roughness: 0.5
         });
 
-        const lazo = new CSG.Brush(geometria_lazo,material_lazo);
+        //const lazo = new CSG.Brush(geometria_lazo,material_lazo);
+        const lazo = new THREE.Group();
+        const lazo1 = new THREE.Mesh(geometria_lazo,material_lazo);
+        lazo.add(lazo1);
+
+        const lazo2 = new THREE.Mesh(geometria_lazo,material_lazo);
+        lazo2.rotation.y = Math.PI;
+        lazo.add(lazo2);
 
         return lazo;
     }
+
+    createTapa(tamano){
+        const geometria_tapa = new THREE.BoxGeometry(tamano*0.43,tamano*0.05,tamano*0.43);
+        const material_tapa = new THREE.MeshStandardMaterial({
+            color: 0xBB0000,
+            roughness: 0.5
+        });
+
+        var tapa = new THREE.Mesh(geometria_tapa,material_tapa);
+
+        tapa.position.set(0,tamano*0.025,tamano*0.2)
+
+        return tapa;
+    }
+
+    createCintasTapa(tamano){
+        var cintas = new THREE.Group();
     
+        const material_cinta = new THREE.MeshStandardMaterial({
+            color: 0x00CC00,
+            roughness: 0.5
+        });
+        const geometria_cinta1 = new THREE.BoxGeometry(tamano*0.06,tamano*0.06,tamano*0.45);
+        const geometria_cinta2 = new THREE.BoxGeometry(tamano*0.45,tamano*0.06,tamano*0.06);
+
+        var cinta1 = new THREE.Mesh(geometria_cinta1,material_cinta);
+        cinta1.position.set(0,tamano*0.025,tamano*0.2);
+        cintas.add(cinta1);
+
+        var cinta2 = new THREE.Mesh(geometria_cinta2,material_cinta);
+        cinta2.position.set(0,tamano*0.025,tamano*0.2);
+        cintas.add(cinta2)
+
+        return cintas;
+    }
+
     /**
      * No hace nada.
      * @param {*} gui 
@@ -144,12 +192,28 @@ class Regalo extends THREE.Object3D{
      */
     createGUI(gui,titleGui){
         this.guiControls = {
-            rotacion: 0
+            tamano:   0.1,    // tamaño base en metros
+            apertura: 0.0     // ángulo de apertura de la tapa (0 = cerrada)
         }
+
         var folder = gui.addFolder(titleGui);
-        folder.add(this.guiControls, 'rotacion', -0.125, 0.2, 0.001)
-        .name('Apertura : ')
-        .onChange((value) => this.setRotationFromAxisAngle(-value));
+
+        folder.add(this.guiControls, 'tamano', 0.05, 0.25, 0.01)
+            .name('Tamaño caja: ')
+            .onChange((value) => this.setTamano(value));
+
+        folder.add(this.guiControls, 'apertura', 0.0, Math.PI / 1.8, 0.01)
+            .name('Abrir tapa: ')
+            .onChange((value) => this.setApertura(value));
+    }
+
+    setTamano(valor) {
+        // Escalamos el regalo completo uniformemente
+        this.scale.set(valor / 0.1, valor / 0.1, valor / 0.1);
+    }
+
+    setApertura(valor) {
+        this.articulacionTapa.rotateX(-valor);
     }
 
     update(){
