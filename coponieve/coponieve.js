@@ -9,7 +9,14 @@ class coponieve extends THREE.Object3D{
         this.createGui(titleGui);
 
         this.materialLlave = new THREE.MeshStandardMaterial({
-            color: 0x0000ff,   // Color latón/oro
+            color: 0x87CEEB,   
+            metalness: 0.9,   
+            roughness: 0.35,   
+            emissive: 0x111100 
+        });
+        
+        this.materialBaston = new THREE.MeshStandardMaterial({
+            color: 0xDAA520,  
             metalness: 0.9,   
             roughness: 0.35,   
             emissive: 0x111100 
@@ -46,24 +53,10 @@ class coponieve extends THREE.Object3D{
      * @param {*} material 
      * @returns 
      */
-    crearBrush(geometria){
-        var brush = new CSG.Brush(geometria,this.materialLlave);
+    crearBrush(geometria,material = this.materialLlave){
+        var brush = new CSG.Brush(geometria,material);
         return brush;
     } 
- 
-    // ─── BRUSH ──────────────────────────────────────────────────────────
- 
-    crearBrush(geometria) {
-        const brush = new CSG.Brush(geometria, this.materialLlave);
-        brush.updateMatrixWorld();
-        return brush;
-    }
- 
- 
-    // ═══════════════════════════════════════════════════════════════════
-    // TÉCNICA 1 — EXTRUSIÓN: BASE COPO DE NIEVE
-    // Shape con líneas radiales + ExtrudeGeometry
-    // ═══════════════════════════════════════════════════════════════════
  
     createBaseCopoNieve() {
         const nBranches = this.guiControls.numBrazos;
@@ -81,8 +74,12 @@ class coponieve extends THREE.Object3D{
             const x = r * Math.cos(angle);
             const y = r * Math.sin(angle);
 
-            shape.lineTo(x,y)
-            shape.moveTo(0, 0);
+
+            //Mejorar para cuando funcione el nBranches
+            if(i != 6){
+                shape.lineTo(x,y)
+                shape.moveTo(0, 0);
+            }
         }
  
         const extrudeSettings = {
@@ -123,7 +120,7 @@ class coponieve extends THREE.Object3D{
 
         const latheGeometry = new THREE.LatheGeometry(points, 32);
 
-        const cuerpo_llave_brush = this.crearBrush(latheGeometry);
+        const cuerpo_llave_brush = this.crearBrush(latheGeometry,this.materialBaston);
 
         return cuerpo_llave_brush;
     }
@@ -168,7 +165,7 @@ class coponieve extends THREE.Object3D{
 
         const geometry = new THREE.ExtrudeGeometry(shape,extrudeSettings);
 
-        const sierra = this.crearBrush(geometry);
+        const sierra = this.crearBrush(geometry,this.materialBaston);
 
         return sierra;
     }
