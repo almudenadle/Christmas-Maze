@@ -43,17 +43,20 @@ class Regalo extends THREE.Object3D{
         var caja = this.createContornoCaja(tamano);
         var cinta_1 = this.createContornoCintas(tamano);
         var cinta_2 = this.createContornoCintas(tamano);
-
-    
+        //var cajaSubstraer = this.createContornoCaja(tamano);
+        
         cinta_2.rotation.y = Math.PI / 2;
+    
 
         cinta_2.updateMatrixWorld();
+        
 
         var evaluador = new CSG.Evaluator();
         var tmp = evaluador.evaluate(caja,cinta_1, CSG.ADDITION);
-        var resultado = evaluador.evaluate(tmp,cinta_2,CSG.ADDITION);
+        var tmp_2 = evaluador.evaluate(tmp,cinta_2,CSG.ADDITION);
+        //var resultado = evaluador.evaluate(tmp_2,cajaSubstraer,CSG.DIFFERENCE);
 
-        return resultado;
+        return tmp_2;
     }
 
 
