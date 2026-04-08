@@ -1,7 +1,7 @@
 import * as THREE from '../libs/three.module.js'
 
 import * as CSG from '../libs/three-bvh-csg.js'
-import { MeshBVH } from '../libs/three-mesh-bvh.js';
+
 
 class Regalo extends THREE.Object3D{
     constructor(gui, titleGui){
@@ -43,20 +43,21 @@ class Regalo extends THREE.Object3D{
         var caja = this.createContornoCaja(tamano);
         var cinta_1 = this.createContornoCintas(tamano);
         var cinta_2 = this.createContornoCintas(tamano);
-        //var cajaSubstraer = this.createContornoCaja(tamano);
+        var cajaSubstraer = this.createContornoCaja(tamano-0.01);
         
         cinta_2.rotation.y = Math.PI / 2;
-    
+        cajaSubstraer.position.set(0,0.01,0);
 
         cinta_2.updateMatrixWorld();
-        
+        cajaSubstraer.updateMatrixWorld();
 
         var evaluador = new CSG.Evaluator();
         var tmp = evaluador.evaluate(caja,cinta_1, CSG.ADDITION);
         var tmp_2 = evaluador.evaluate(tmp,cinta_2,CSG.ADDITION);
-        //var resultado = evaluador.evaluate(tmp_2,cajaSubstraer,CSG.DIFFERENCE);
+        var resultado = evaluador.evaluate(tmp_2,cajaSubstraer,CSG.SUBTRACTION);
 
-        return tmp_2;
+        
+        return resultado;
     }
 
 
@@ -81,6 +82,7 @@ class Regalo extends THREE.Object3D{
         const geometria_caja = new THREE.BoxGeometry(tamano*0.4,tamano*0.4,tamano*0.4);
         const material_caja = new THREE.MeshStandardMaterial({
             color: 0xBB0000,
+            side: THREE.DoubleSide,
             roughness: 0.5
         });
 
@@ -205,9 +207,11 @@ class Regalo extends THREE.Object3D{
             .name('Tamaño caja: ')
             .onChange((value) => this.setTamano(value));
 
-        folder.add(this.guiControls, 'apertura', 0.0, Math.PI / 1.8, 0.01)
+        folder.add(this.guiControls, 'apertura', 0.0, Math.PI / 2, 0.01)
             .name('Abrir tapa: ')
             .onChange((value) => this.setApertura(value));
+            
+        
     }
 
     setTamano(valor) {
@@ -216,7 +220,7 @@ class Regalo extends THREE.Object3D{
     }
 
     setApertura(valor) {
-        this.articulacionTapa.rotateX(-valor);
+        this.articulacionTapa.rotation.x = -valor; // Rotamos la tapa hacia atrás para abrirla
     }
 
     update(){
