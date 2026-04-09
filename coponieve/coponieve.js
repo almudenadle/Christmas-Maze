@@ -1,12 +1,12 @@
 import * as THREE from '../libs/three.module.js'
 import * as CSG from '../libs/three-bvh-csg.js'
-import { GUI } from 'gui'
+
 
 class coponieve extends THREE.Object3D{
     constructor(gui,titleGui){
         super();
 
-        this.createGui(titleGui);
+        this.createGui(gui,titleGui);
 
         this.materialLlave = new THREE.MeshStandardMaterial({
             color: 0x87CEEB,   
@@ -26,6 +26,7 @@ class coponieve extends THREE.Object3D{
 
         llave.scale.set(0.025,0.025,0.025);
         llave.position.y = 0;
+        
 
         this.add(llave);
     }
@@ -119,7 +120,7 @@ class coponieve extends THREE.Object3D{
         points.push(new THREE.Vector2(0, -(altura+0.2)));  
 
         const latheGeometry = new THREE.LatheGeometry(points, 32);
-
+        
         const cuerpo_llave_brush = this.crearBrush(latheGeometry,this.materialBaston);
 
         return cuerpo_llave_brush;
@@ -171,10 +172,9 @@ class coponieve extends THREE.Object3D{
     }
 
 
-    createGui(titleGui){
-        var gui = new GUI();
-
+    createGui(gui,titleGui){
         this.guiControls = {
+            tamano:   0.1,    
             numBrazos: 8,
             longBrazos: 0.75,
             depth: 0.15,
@@ -182,6 +182,10 @@ class coponieve extends THREE.Object3D{
         };
 
         var folder = gui.addFolder(titleGui);
+
+        folder.add(this.guiControls, 'tamano', 0.05, 0.25, 0.01)
+            .name('Tamaño llave: ')
+            .onChange((value) => this.setTamano(value));
 
         folder.add(this.guiControls,"numBrazos",4,8,1)
             .name("Número de Brazos del Copo: ")
@@ -200,6 +204,9 @@ class coponieve extends THREE.Object3D{
             .onChange(() => this.createLlave());
     }
 
+    setTamano(value){
+        this.scale.set(value / 0.1, value / 0.1, value / 0.1);
+    }
 
     update() {
         //No se actualiza nada porque no hace nada
