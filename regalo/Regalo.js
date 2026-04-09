@@ -10,7 +10,9 @@ class Regalo extends THREE.Object3D{
         /*
         Vamos a crear el Gui para el regalo.
         */
-       this.createGUI(gui,titleGui);
+        this.createGUI(gui,titleGui);
+
+        const textura = new THREE.TextureLoader().load('../imgs/patron.jpg');
 
         var tamano = 0.1;   // Las unidades son metros
 
@@ -55,7 +57,7 @@ class Regalo extends THREE.Object3D{
         var tmp = evaluador.evaluate(caja,cinta_1, CSG.ADDITION);
         var tmp_2 = evaluador.evaluate(tmp,cinta_2,CSG.ADDITION);
         var resultado = evaluador.evaluate(tmp_2,cajaSubstraer,CSG.SUBTRACTION);
-
+        
         
         return resultado;
     }
