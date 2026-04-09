@@ -1,80 +1,165 @@
 import * as THREE from 'three'
 
+//imports para el knob
+import { MTLLoader } from '../libs/MTLLoader.js';
+import { OBJLoader } from '../libs/OBJLoader.js';
+
 import * as CSG from '../libs/three-bvh-csg.js'
 
 class Puerta extends THREE.Object3D {
   constructor() {
     super();
-    // this.createRosco();
+    this.abierta = false;
+    this.rotacionObjetivo = 0;
+    //this.createRosco();
     this.createPuerta();
+    this.cargarKnob();
+    setInterval(() => {
+      this.alternarPuerta();
+    }, 2000);
   }
+
 
   createPuerta() {
-    const lado = 0.3;
-    const puntosHaciaArriba = [];
-    const puntos2 = [];
+    const lado = 0.3; // Grosor de la puerta
+    const altoRecto = 0.8; // Altura de los tramos verticales
+    const radioArco = 0.7; // Radio del arco superior
+    const puntos = []; //Recorrido del marco de la puerta
+    const puntosPuerta = []; //Recorrido de la puerta interior 
 
-    //hacemos rectangulo de la puerta en si, barrido
-    const rectangulo = this.createRectangulo(lado);
-
-    for (let i = 0; i < lado * 2.75; i += 0.03) {
-      puntosHaciaArriba.push(new THREE.Vector3(0, i, 0));
+    //Hacemos el marco de la puerta con un barrido a lo largo de una curva que es un recto + un arco + otro recto
+    // Tramo que sube recto 1
+    for (let i = 0; i <= altoRecto; i += 0.05) {
+      puntos.push(new THREE.Vector3(radioArco, i, 0));
     }
-    const caminoHacer = new THREE.CatmullRomCurve3(puntosHaciaArriba);
 
-    const options = { steps: 1, extrudePath: caminoHacer };
-
-    const geometriaPuerta = new THREE.ExtrudeGeometry(rectangulo, options);
-
-    this.texturaPuerta = new THREE.TextureLoader().load('../imgs/wood.jpg');
-
-    const materialPuerta = new THREE.MeshStandardMaterial({ map: this.texturaPuerta });
-
-    this.puerta = new THREE.Mesh(geometriaPuerta, materialPuerta);
-
-    //hacemos un relieve para que la puerta parezca mas puerta
-    const rectangulo1 = this.createRectangulo(lado - lado * 0.2);
-
-    for (let i = 0; i < lado * 2.4; i += 0.03) {
-      puntos2.push(new THREE.Vector3(0, i, 0));
+    // El arco
+    for (let angulo = 0; angulo <= Math.PI; angulo += 0.1) {
+      const x = Math.cos(angulo) * radioArco;
+      const y = altoRecto + Math.sin(angulo) * radioArco;
+      puntos.push(new THREE.Vector3(x, y, 0));
     }
-    const caminoHacerRelieve = new THREE.CatmullRomCurve3(puntos2);
-    const optionsRelieve = { steps: 1, extrudePath: caminoHacerRelieve };
 
-    const geometriaRelieve1 = new THREE.ExtrudeGeometry(rectangulo1, optionsRelieve);
+    // Tramo que baja recto 2
+    for (let i = altoRecto; i >= -0.05; i -= 0.05) {
+      puntos.push(new THREE.Vector3(-radioArco, i, 0));
+    }
 
-    geometriaRelieve1.translate(0.01, 0.06, 0);
+    const caminoHacer = new THREE.CatmullRomCurve3(puntos);
+    const rectangulo = this.createCuadrado(lado);
 
-    this.texturaRelieve = new THREE.TextureLoader().load('../imgs/wood_oscura.jpg');
+    const options = {
+      steps: 100,
+      extrudePath: caminoHacer,
+      bevelEnabled: false // para que las juntas del marco sean limpias
+    };
 
-    const materialRelieve = new THREE.MeshStandardMaterial({ map: this.texturaRelieve });
+    const geometriaMarcoPuerta = new THREE.ExtrudeGeometry(rectangulo, options);
 
-    this.rectangulo1 = new THREE.Mesh(geometriaRelieve1, materialRelieve);
+    const loader = new THREE.TextureLoader();
 
-    const rectangulo2 = this.createRectangulo(lado - lado * 0.25);
-    const geometriaRelieve2 = new THREE.ExtrudeGeometry(rectangulo1, optionsRelieve);
-        geometriaRelieve2.translate(0.08, 0.06, 0);
+    //hacemos la puerta roja en vez de usar imagen 
+    const materialPuerta = new THREE.MeshStandardMaterial({color: 0x870821});
+    this.marcoPuerta = new THREE.Mesh(geometriaMarcoPuerta, materialPuerta);
 
-    this.rectangulo2 = new THREE.Mesh(geometriaRelieve2, materialRelieve);
 
-    this.add(this.rectangulo1);
-    this.add(this.rectangulo2);
+    //La puerta interior
 
-    //AHORA MISMO SON EXACTAMENTE IGUALES LOS RECTANFULOSSSSS
-    // Añadimos la puerta a la clase
-    this.add(this.puerta);
+    const radioArcoInterior = radioArco - (lado / 2); // Hacemos el arco un poco más pequeño que el marco para que quede dentro
+    const siluetaPuerta = new THREE.Shape();
+    siluetaPuerta.moveTo(-radioArcoInterior, 0);
+    siluetaPuerta.lineTo(radioArcoInterior, 0);
+    siluetaPuerta.lineTo(radioArcoInterior, altoRecto);
+    // Añadimos el arco a la forma para que sea una sola cara sólida, lo hacemos con absarc
+    //los parametros serian x,y,radio,anguloInicial,anguloFinal,siEsEnSentidoHorario
+    siluetaPuerta.absarc(0, altoRecto, radioArcoInterior, 0, Math.PI, false);
+    siluetaPuerta.lineTo(-radioArcoInterior, 0);
+
+    //El camino para la puerta interior es solo una línea recta que le da el "grosor"
+    //Hubiese sido bueno hacer esta puerta con un extrude sencillamente, pero queriamos practicar el extrudePath, 
+    // así que hacemos un camino recto hacia adelante y barrimos la silueta de la puerta a lo largo de ese camino.
+    puntosPuerta.push(new THREE.Vector3(0, 0, 0));
+    puntosPuerta.push(new THREE.Vector3(0, 0, lado));
+
+
+
+    const caminoHacerPuerta = new THREE.CatmullRomCurve3(puntosPuerta);
+
+    const optionsPuerta = {
+      steps: 1, // Al ser línea recta, no necesita muchos pasos          
+      extrudePath: caminoHacerPuerta,
+      bevelEnabled: false
+    };
+
+    const geometriaPuerta = new THREE.ExtrudeGeometry(siluetaPuerta, optionsPuerta);
+
+    geometriaPuerta.rotateZ(Math.PI / 2);
+    geometriaPuerta.translate(0, 0, -lado / 2);
+
+    //Bisagra
+    geometriaPuerta.translate(-radioArcoInterior, 0, 0);
+
+    const texturaPuertaInterior = loader.load('../imgs/patron.jpg');
+    //hacemos que se repita
+    texturaPuertaInterior.wrapS = THREE.RepeatWrapping;
+    texturaPuertaInterior.wrapT = THREE.RepeatWrapping;
+    texturaPuertaInterior.repeat.set(1, 1);
+    const materialPuertaInterior = new THREE.MeshStandardMaterial({ map: texturaPuertaInterior });
+
+
+    this.puertaInterior = new THREE.Mesh(geometriaPuerta, materialPuertaInterior);
+
+    //como movimos la geometria,movemos el mesh
+    this.puertaInterior.position.x = radioArcoInterior;
+
+    this.createRosco();
+    this.add(this.marcoPuerta);
+
+    this.cargarKnob();
+    this.add(this.puertaInterior);
+
   }
 
-  createRectangulo(lado) {
+
+  createCuadrado(lado) {
     const rectangulo = new THREE.Shape();
-    rectangulo.moveTo(-lado, 0);
-    rectangulo.lineTo(lado, 0);
-    rectangulo.lineTo(lado, lado / 3);
-    rectangulo.lineTo(-lado, lado / 3);
+    rectangulo.moveTo(-lado / 2, -lado / 2);
+    rectangulo.lineTo(lado / 2, -lado / 2);
+    rectangulo.lineTo(lado / 2, lado / 2);
+    rectangulo.lineTo(-lado / 2, lado / 2);
     return rectangulo;
   }
-  createRosco() {
 
+  cargarKnob() {
+    var materialLoader = new MTLLoader();
+    var objectLoader = new OBJLoader();
+    materialLoader.load('../models/knob/Blank.mtl', (materials) => {
+      objectLoader.setMaterials(materials);
+      objectLoader.load('../models/knob/Knob.obj', (object) => {
+        object.scale.set(0.01, 0.01, 0.01);
+        //rotamos el knob para que quede orientado como una manilla de puerta
+        //si pusiesemos pi/2 quedaria del reves,asi que no ponemos eso
+        object.rotation.x = Math.PI / 2;
+        object.rotation.z = Math.PI;
+        //lo situamos acorde a la puerta, para eso lo movemos a la mitad de la altura de la puerta y un poco hacia afuera
+        object.position.set(-0.9, 0.6, 0.175);
+
+        this.puertaInterior.add(object);
+      });
+    });
+  }
+
+  abrirPuerta() {
+    // Alternamos entre abierta (-90 grados) y cerrada (0 grados)
+    if (this.rotacionObjetivo === 0) {
+      this.rotacionObjetivo = -Math.PI / 2; // Hacia adentro
+    } else {
+      this.rotacionObjetivo = 0; // Cerrada
+    }
+  }
+
+
+  createRosco() {
 
     const radioRecorrido = 0.5;
     const puntosCamino = [];
@@ -93,7 +178,7 @@ class Puerta extends THREE.Object3D {
 
     // Creamos curva cerrada a partir de los puntos
     const caminoBarrer = new THREE.CatmullRomCurve3(puntosCamino);
-    caminoBarrer.closed = true;                                                   //HACE FALTAAAAAAAAAAAA?
+    caminoBarrer.closed = true;  //Para que termine el recorrido
 
 
     // Hexágono 2D 
@@ -119,28 +204,71 @@ class Puerta extends THREE.Object3D {
 
     const geometriaRosco = new THREE.ExtrudeGeometry(formaRosco, opcionesBarrido);
 
-    // 4. MATERIAL
 
     this.texturaRosco = new THREE.TextureLoader().load('../imgs/hojas.jpg');
 
-    // TRUCO PARA BARRIDOS: Hacemos que la textura se repita en lugar de estirarse
-    this.texturaRosco.wrapS = THREE.RepeatWrapping;
     this.texturaRosco.wrapT = THREE.RepeatWrapping;
-    // El primer número (8) es cuántas veces se repite a lo largo del rosco. 
-    // El segundo (1) es cuántas veces se repite a lo ancho. 
-    // ¡Juega con el 8 hasta que veas que la textura cuadra bien!
-    this.texturaRosco.repeat.set(60, 130);
+    this.texturaRosco.wrapS = THREE.RepeatWrapping;
+    this.texturaRosco.repeat.set(8, 10);
 
     const materialRosco = new THREE.MeshStandardMaterial({ map: this.texturaRosco });
 
     this.mallaRosco = new THREE.Mesh(geometriaRosco, materialRosco);
 
-    // Añadimos el rosco a la clase
-    this.add(this.mallaRosco);
+    this.mallaRosco.scale.set(0.3, 0.3, 0.3);
+    this.mallaRosco.position.set(-0.55, 0.9, 0.22);
+
+    this.crearBolasNavidad(caminoBarrer);
+
+    this.puertaInterior.add(this.mallaRosco);
   }
 
-  update() {
+  crearBolasNavidad(camino) {
+    const geoBola = new THREE.SphereGeometry(0.06, 16, 16);
+
+    const matRojo = new THREE.MeshStandardMaterial({
+      color: 0xff0000,
+      metalness: 0.9, 
+      roughness: 0.1  // Muy liso
+    });
+    const matOro = new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      metalness: 0.9,
+      roughness: 0.1
+    });
+    const materiales = [matRojo, matOro];
+
+    const numBolas = 8; 
+
+    for (let i = 0; i < numBolas; i++) {
+      const t = i / numBolas;
+
+      const posicion = camino.getPointAt(t);
+
+      const material = materiales[i % materiales.length];
+      const bola = new THREE.Mesh(geoBola, material);
+
+      bola.position.set(posicion.x, posicion.y, posicion.z + 0.2);
+
+      this.mallaRosco.add(bola);
+    }
   }
+
+  alternarPuerta() {
+    this.abierta = !this.abierta;
+    // Si está abierta, el objetivo es 90 grados (PI/2), si no, es 0.
+    this.rotacionObjetivo = this.abierta ? Math.PI / 2 : 0;
+  }
+  update() {
+    // MathUtils.lerp mueve suavemente el valor actual hacia el valor objetivo.
+    // El '0.1' es la velocidad.
+    this.puertaInterior.rotation.y = THREE.MathUtils.lerp(
+      this.puertaInterior.rotation.y,
+      this.rotacionObjetivo,
+      0.1
+    );
+  }
+
 }
 
 export { Puerta }
