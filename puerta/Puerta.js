@@ -223,13 +223,14 @@ class Puerta extends THREE.Object3D {
     this.puertaInterior.add(this.mallaRosco);
   }
 
+
   crearBolasNavidad(camino) {
-    const geoBola = new THREE.SphereGeometry(0.06, 16, 16);
+    const geoBola = new THREE.SphereGeometry(0.018, 16, 16);
 
     const matRojo = new THREE.MeshStandardMaterial({
       color: 0xff0000,
       metalness: 0.9, 
-      roughness: 0.1  // Muy liso
+      roughness: 0.1 
     });
     const matOro = new THREE.MeshStandardMaterial({
       color: 0xffd700,
@@ -238,21 +239,40 @@ class Puerta extends THREE.Object3D {
     });
     const materiales = [matRojo, matOro];
 
+    let roscoBrush = new CSG.Brush(this.mallaRosco.geometry, this.mallaRosco.material);
+    
+    roscoBrush.position.copy(this.mallaRosco.position);
+    roscoBrush.rotation.copy(this.mallaRosco.rotation);
+    roscoBrush.scale.copy(this.mallaRosco.scale);
+    roscoBrush.updateMatrixWorld();
+
+    let evaluador = new CSG.Evaluator();
+    
     const numBolas = 8; 
 
     for (let i = 0; i < numBolas; i++) {
       const t = i / numBolas;
-
       const posicion = camino.getPointAt(t);
-
       const material = materiales[i % materiales.length];
-      const bola = new THREE.Mesh(geoBola, material);
+      
+      const bolaBrush = new CSG.Brush(geoBola, material);
 
-      bola.position.set(posicion.x, posicion.y, posicion.z + 0.2);
+      bolaBrush.position.set(
+        this.mallaRosco.position.x + (posicion.x * 0.3), 
+        this.mallaRosco.position.y + (posicion.y * 0.3), 
+        this.mallaRosco.position.z + 0.07
+      );
+      
+      bolaBrush.updateMatrixWorld();
 
-      this.mallaRosco.add(bola);
+      roscoBrush = evaluador.evaluate(roscoBrush, bolaBrush, CSG.ADDITION);
     }
+
+    this.puertaInterior.remove(this.mallaRosco);
+    this.mallaRosco = roscoBrush;
+    this.puertaInterior.add(this.mallaRosco);
   }
+
 
   alternarPuerta() {
     this.abierta = !this.abierta;
