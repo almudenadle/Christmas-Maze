@@ -22,13 +22,17 @@ class coponieve extends THREE.Object3D{
             emissive: 0x111100 
         });
 
-        const llave = this.createLlave();
+        this.updateLlave();
+    }
 
-        llave.scale.set(0.025,0.025,0.025);
-        llave.position.y = 0;
-        
 
-        this.add(llave);
+    updateLlave() {
+        if (this.llave) this.remove(this.llave);
+        this.llave = this.createLlave();
+        this.llave.scale.set(0.025, 0.025, 0.025);
+
+        this.llave.position.y = 0.13;
+        this.add(this.llave);
     }
 
     createLlave(){
@@ -67,21 +71,20 @@ class coponieve extends THREE.Object3D{
  
         const shape = new THREE.Shape();
  
-        const angulo = Math.PI/4;
+        const angulo = (2 * Math.PI) / (nBranches * 2);
+        const rInterno = 0.15;
 
-        for(let i = 0; i <= nBranches; i++){
-            const angle = i * angulo
+        for(let i = 0; i <= nBranches * 2; i++){
+            const angle = i * angulo;
 
-            const x = r * Math.cos(angle);
-            const y = r * Math.sin(angle);
+            const radio = (i % 2 === 0) ? r : rInterno;
+            const x = radio * Math.cos(angle);
+            const y = radio * Math.sin(angle);
 
-
-            //Mejorar para cuando funcione el nBranches
-            if(i != 6){
-                shape.lineTo(x,y)
-                shape.moveTo(0, 0);
-            }
+            if(i === 0) shape.moveTo(x, y);
+            else shape.lineTo(x, y);
         }
+        shape.closePath();
  
         const extrudeSettings = {
             depth:          depth,
@@ -101,29 +104,26 @@ class coponieve extends THREE.Object3D{
      * @returns El cuerpo de la llave
      */
     createCuerpoLlave(){
-        var points = [];
-        
-        //Vamos a definir los parámetros.
-        const radio = 0.1;
-        const segmento = 0.1;
-        const altura = 5;
+        // --- Parámetros del bastón (fáciles de cambiar) ---
+        const radio    = 0.10;  // radio del cilindro principal
+        const ensanche = 1.50;  // factor de ensanche de la cabeza (radio * ensanche)
+        const yTop     = 0.50;  // altura del extremo superior
+        const yCabeza  = 0.20;  // distancia hacia abajo donde arranca la transición de cabeza
+        const yHombro  = 1.40;  // Y del hombro (donde el bastón se estrecha)
+        const altura   = 5.00;  // longitud del bastón
+        const punta    = 0.20;  // longitud extra de la punta inferior
 
-        points.push(new THREE.Vector2(0,0.5));  
-        points.push(new THREE.Vector2(radio, -(segmento+0.1))); 
-        points.push(new THREE.Vector2(radio*1.5, -(segmento+0.1))); 
-
-        points.push(new THREE.Vector2(radio, -1.4));
-        points.push(new THREE.Vector2(radio, -altura)); 
-
-        // --- Punta final ---
-        points.push(new THREE.Vector2(radio*1.2, -(altura+0.2))); 
-        points.push(new THREE.Vector2(0, -(altura+0.2)));  
+        const points = [];
+        points.push(new THREE.Vector2(0,                yTop));
+        points.push(new THREE.Vector2(radio,           -yCabeza));
+        points.push(new THREE.Vector2(radio * ensanche,-yCabeza));
+        points.push(new THREE.Vector2(radio,           -yHombro));
+        points.push(new THREE.Vector2(radio,           -altura));
+        points.push(new THREE.Vector2(radio * 1.2,     -(altura + punta)));
+        points.push(new THREE.Vector2(0,               -(altura + punta)));
 
         const latheGeometry = new THREE.LatheGeometry(points, 32);
-        
-        const cuerpo_llave_brush = this.crearBrush(latheGeometry,this.materialBaston);
-
-        return cuerpo_llave_brush;
+        return this.crearBrush(latheGeometry, this.materialBaston);
     }
     
     /**
@@ -131,44 +131,61 @@ class coponieve extends THREE.Object3D{
      * @returns crea la sierra
      */
     createSierraLlave(){
+        // --- Parámetros de la sierra (fáciles de cambiar) ---
+        const radioBaston    = 0.10;  // radio del bastón (debe coincidir con createCuerpoLlave)
+        const anchuraSierra  = 0.40;  // cuánto sobresale la sierra del bastón
+        const yInicio        = -3.50; // Y donde arranca la sierra en el bastón
+        const alturaTotal    = 1.00;  // altura total del bloque de la sierra
+        const margenX        = 0.05;  // margen horizontal de los huecos de los dientes
+        const margenYDiente  = 0.20;  // espacio entre el borde y cada diente
+        const alturaDiente   = 0.20;  // altura de cada hueco (diente)
+
+        // Valores derivados (no tocar)
+        const xMin       = radioBaston;
+        const xMax       = radioBaston + anchuraSierra;
+        const yFin       = yInicio - alturaTotal;
+        const xMinDiente = xMin + margenX;
+        const xMaxDiente = xMax - margenX;
+
         const shape = new THREE.Shape();
-        //Lo primero es hacer una forma rectangular. Para ello en función de un punto medio de el cuerpo de la llave.
-        shape.moveTo(0.1,-3.5);
-        shape.lineTo(0.5,-3.5);
-        shape.lineTo(0.5,-4.5);
-        shape.lineTo(0.1,-4.5);
-        shape.lineTo(0.1,-3.5);
+        shape.moveTo(xMin, yInicio);
+        shape.lineTo(xMax, yInicio);
+        shape.lineTo(xMax, yFin);
+        shape.lineTo(xMin, yFin);
+        shape.closePath();
 
-        //Ahora vamos a hacerle dos sierras.
-        const sierra1 = new THREE.Shape();
-        sierra1.moveTo(0.45,-3.7);
-        sierra1.lineTo(0.45,-3.9);
-        sierra1.lineTo(0.15,-3.9);
-        sierra1.lineTo(0.15,-3.7);
-        sierra1.lineTo(0.45,-3.7);
-        shape.holes.push(sierra1);
+        // Diente 1
+        const yTopD1    = yInicio   - margenYDiente;
+        const yBottomD1 = yTopD1    - alturaDiente;
+        const diente1 = new THREE.Shape();
+        diente1.moveTo(xMaxDiente, yTopD1);
+        diente1.lineTo(xMaxDiente, yBottomD1);
+        diente1.lineTo(xMinDiente, yBottomD1);
+        diente1.lineTo(xMinDiente, yTopD1);
+        diente1.closePath();
+        shape.holes.push(diente1);
 
-        const sierra2 = new THREE.Shape();
-        sierra2.moveTo(0.45,-4.1);
-        sierra2.lineTo(0.45,-4.3);
-        sierra2.lineTo(0.15,-4.3);
-        sierra2.lineTo(0.15,-4.1);
-        sierra2.lineTo(0.45,-4.1);
-        shape.holes.push(sierra2);
-        
-         const extrudeSettings = {
+        // Diente 2
+        const yTopD2    = yBottomD1 - margenYDiente;
+        const yBottomD2 = yTopD2    - alturaDiente;
+        const diente2 = new THREE.Shape();
+        diente2.moveTo(xMaxDiente, yTopD2);
+        diente2.lineTo(xMaxDiente, yBottomD2);
+        diente2.lineTo(xMinDiente, yBottomD2);
+        diente2.lineTo(xMinDiente, yTopD2);
+        diente2.closePath();
+        shape.holes.push(diente2);
+
+        const extrudeSettings = {
             depth: 0.1,
             bevelEnabled: true,
-            bevelThickness: 0.05, 
+            bevelThickness: 0.05,
             bevelSize: 0.15,
             bevelSegments: 2
-        }
+        };
 
-        const geometry = new THREE.ExtrudeGeometry(shape,extrudeSettings);
-
-        const sierra = this.crearBrush(geometry,this.materialBaston);
-
-        return sierra;
+        const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        return this.crearBrush(geometry, this.materialBaston);
     }
 
 
@@ -188,20 +205,20 @@ class coponieve extends THREE.Object3D{
             .onChange((value) => this.setTamano(value));
 
         folder.add(this.guiControls,"numBrazos",4,8,1)
-            .name("Número de Brazos del Copo: ")
-            .onChange(() => this.createLlave());
+            .name("Bisel: ")
+            .onChange(() => this.updateLlave());
 
         folder.add(this.guiControls,"longBrazos",0.5,1.3,0.1)
             .name("Longitud de los brazos Copo: ")
-            .onChange(() => this.createLlave());
+            .onChange(() => this.updateLlave());
         
         folder.add(this.guiControls,"depth",0.05,0.35,0.1)
             .name("Profundidad: ")
-            .onChange(() => this.createLlave());
+            .onChange(() => this.updateLlave());
         
         folder.add(this.guiControls,"bevel",0.03,0.05,0.01)
-            .name("Número de Brazos del Copo: ")
-            .onChange(() => this.createLlave());
+            .name("Bisel: ")
+            .onChange(() => this.updateLlave());
     }
 
     setTamano(value){

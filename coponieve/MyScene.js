@@ -22,7 +22,7 @@ class MyScene extends THREE.Scene {
   constructor(myCanvas) {
     super();
 
-    this.fog = new THREE.FogExp2(0x0a1628, 2);
+    this.fog = new THREE.FogExp2(0x0a1628, 1);
     // Lo primero, crear el visualizador, pasándole el lienzo sobre el que realizar los renderizados.
     this.renderer = this.createRenderer(myCanvas);
 
@@ -100,7 +100,7 @@ class MyScene extends THREE.Scene {
     ground.position.y = -0.03;
 
     // Que no se nos olvide añadirlo a la escena, que en este caso es  this
-    //this.add(ground);
+    this.add(ground);
   }
 
   createNieve (n = 500) {
