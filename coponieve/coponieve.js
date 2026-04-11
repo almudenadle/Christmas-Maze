@@ -217,7 +217,7 @@ class coponieve extends THREE.Object3D{
             .onChange(() => this.updateLlave());
         
         folder.add(this.guiControls,"bevel",0.03,0.05,0.01)
-            .name("Bisel: ")
+            .name("Bevel: ")
             .onChange(() => this.updateLlave());
     }
 
