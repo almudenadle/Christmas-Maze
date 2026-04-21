@@ -104,14 +104,13 @@ class coponieve extends THREE.Object3D{
      * @returns El cuerpo de la llave
      */
     createCuerpoLlave(){
-        // --- Parámetros del bastón (fáciles de cambiar) ---
-        const radio    = 0.10;  // radio del cilindro principal
-        const ensanche = 1.50;  // factor de ensanche de la cabeza (radio * ensanche)
-        const yTop     = 0.50;  // altura del extremo superior
-        const yCabeza  = 0.20;  // distancia hacia abajo donde arranca la transición de cabeza
-        const yHombro  = 1.40;  // Y del hombro (donde el bastón se estrecha)
-        const altura   = 5.00;  // longitud del bastón
-        const punta    = 0.20;  // longitud extra de la punta inferior
+        const radio    = 0.10;  
+        const ensanche = 1.50;  
+        const yTop     = 0.50;  
+        const yCabeza  = 0.20;  
+        const yHombro  = 1.40;  
+        const altura   = 5.00;  
+        const punta    = 0.20;  
 
         const points = [];
         points.push(new THREE.Vector2(0,                yTop));
