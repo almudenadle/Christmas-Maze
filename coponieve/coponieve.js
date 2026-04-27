@@ -40,6 +40,10 @@ class coponieve extends THREE.Object3D{
         var base = this.createBaseCopoNieve();
         var cuerpo_llave = this.createCuerpoLlave();
         var sierra = this.createSierraLlave();
+        
+        base.position.y = 0.15;
+        cuerpo_llave.position.z = 0.05;
+        sierra.position.z = 0.05;
 
         // updateMatrixWorld obligatorio antes de evaluate
         base.updateMatrixWorld();
@@ -130,16 +134,14 @@ class coponieve extends THREE.Object3D{
      * @returns crea la sierra
      */
     createSierraLlave(){
-        // --- Parámetros de la sierra (fáciles de cambiar) ---
-        const radioBaston    = 0.10;  // radio del bastón (debe coincidir con createCuerpoLlave)
-        const anchuraSierra  = 0.40;  // cuánto sobresale la sierra del bastón
-        const yInicio        = -3.50; // Y donde arranca la sierra en el bastón
-        const alturaTotal    = 1.00;  // altura total del bloque de la sierra
-        const margenX        = 0.05;  // margen horizontal de los huecos de los dientes
-        const margenYDiente  = 0.20;  // espacio entre el borde y cada diente
-        const alturaDiente   = 0.20;  // altura de cada hueco (diente)
+        const radioBaston    = 0.10;  
+        const anchuraSierra  = 0.40;  
+        const yInicio        = -3.50; 
+        const alturaTotal    = 1.00;  
+        const margenX        = 0.05;  
+        const margenYDiente  = 0.20; 
+        const alturaDiente   = 0.20; 
 
-        // Valores derivados (no tocar)
         const xMin       = radioBaston;
         const xMax       = radioBaston + anchuraSierra;
         const yFin       = yInicio - alturaTotal;
@@ -184,6 +186,7 @@ class coponieve extends THREE.Object3D{
         };
 
         const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        geometry.translate(0, 0, -0.05); // Centrar la sierra en el eje Z
         return this.crearBrush(geometry, this.materialBaston);
     }
 
