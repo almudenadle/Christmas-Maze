@@ -14,7 +14,7 @@ class Regalo extends THREE.Object3D{
 
         const textura = new THREE.TextureLoader().load('../imgs/patron.jpg');
 
-        var tamano = 0.1;   // Las unidades son metros
+        var tamano = 0.1;  
 
         const cuerpo = this.createRegalo(tamano);
         this.add(cuerpo);
@@ -145,7 +145,6 @@ class Regalo extends THREE.Object3D{
             roughness: 0.5
         });
 
-        //const lazo = new CSG.Brush(geometria_lazo,material_lazo);
         const lazo = new THREE.Group();
         const lazo1 = new THREE.Mesh(geometria_lazo,material_lazo);
         lazo.add(lazo1);
@@ -193,7 +192,7 @@ class Regalo extends THREE.Object3D{
     }
 
     /**
-     * No hace nada.
+     * Creamos el GUI para el regalo, con sus respectivos controles.
      * @param {*} gui 
      * @param {*} titleGui 
      */
