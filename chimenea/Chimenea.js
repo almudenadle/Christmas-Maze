@@ -91,8 +91,7 @@ class Chimenea extends THREE.Object3D {
       .name('Apertura : ')
       .onChange((value) => this.setAngulo(-value));
   }
-
-                
+    
   createFuego(tamano) {
     this.fuego = new THREE.Object3D();
     this.llamas = []; // Array para guardar las llamas 
