@@ -49,39 +49,10 @@ class BastonCaramelo extends THREE.Object3D {
             extrudePath: path
         });
 
-        this.remapUVsByArcLength(geometry, path, 200);
-
         var tube = new THREE.Mesh(geometry, this.materialBaston);
 
         return tube;
     }
-    
-    remapUVsByArcLength(geometry, path, steps) {
-        // Calcula las posiciones reales a lo largo del camino
-        const arcLengths = path.getLengths(steps);      // array de longitudes acumuladas
-        const totalLength = arcLengths[arcLengths.length - 1];
-
-        const uvAttr = geometry.attributes.uv;
-        const posAttr = geometry.attributes.position;
-
-        // Para cada vértice, buscamos a qué "t" del camino corresponde su Z
-        // ExtrudeGeometry con extrudePath pone el progreso en el eje local del path
-        // Podemos recalcular U usando el índice del step al que pertenece el vértice
-        const totalVerts = posAttr.count;
-        const vertsPerStep = totalVerts / (steps + 1); // vértices del perfil por cada step
-
-        for (let i = 0; i < totalVerts; i++) {
-            const stepIndex = Math.floor(i / vertsPerStep);
-            const arcLen = arcLengths[Math.min(stepIndex, arcLengths.length - 1)];
-            const uNuevo = arcLen / totalLength;
-
-            // Mantenemos V tal como está (coordenada "radial" del perfil circular)
-            uvAttr.setX(i, uNuevo);
-        }
-
-        uvAttr.needsUpdate = true;
-    }
-
 
     update(){}
 }

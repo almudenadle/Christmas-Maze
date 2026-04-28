@@ -4,82 +4,113 @@ import * as CSG from '../libs/three-bvh-csg.js'
 class Campana extends THREE.Object3D {
     constructor(gui, titleGui) {
         super();
-    
-        var material = new THREE.MeshPhongMaterial({color: 0xFF0000});
-        var materialInterior = new THREE.MeshPhongMaterial({color: 0x0000FF});
-        
-        var cil = new CSG.Brush(new THREE.CylinderGeometry(0.25, 0.5, 0.5,32), material);
-        var cilindro = new CSG.Brush(new THREE.CylinderGeometry(0.5, 0.5, 0.5, 32), materialInterior); 
-       
-        cilindro.position.x = 0.5; // Ajusta la posición del cilindro para que se superponga con el cubo
+        this.createGUI(gui, titleGui);
 
-        cilindro.updateWorldMatrix(); // Asegúrate de actualizar la matriz del cilindro después de cambiar su posición
+        this.articulacionCampana = new THREE.Object3D();
+        this.add(this.articulacionCampana);
 
-        var evaluador = new CSG.Evaluator();
+        var campana = this.createCampana();
+        campana.position.y = -0.5; 
+        this.articulacionCampana.add(campana);
 
-        var resultado = evaluador.evaluate(cilindro, cil, CSG.SUBTRACTION); // Realiza la operación de unión entre el cubo y el cilindro
+        this.articulacionBadajo = new THREE.Object3D();
+        this.articulacionBadajo.position.y = -0.1; // cuelga desde la cima
+        this.articulacionCampana.add(this.articulacionBadajo);
 
+        var badajo = this.createBadajo();
+        badajo.position.y = -0.25;
+        this.articulacionBadajo.add(badajo);
 
-        this.add(resultado);
-        
-        //var campana = this.createCampana();
-        //var interior = this.createInterior();
-        
-        //this.add(campana);
-        //this.add(interior);
+        this.maxAnguloMovimiento = Math.PI / 6;
+        this.velocidad = 0.01;
+        this.anguloActual = 0;
+        this.anguloBadajo = 0;   // ángulo independiente del badajo
+        this.sentido = 1;
 
-        // Escalar para que quepa en la escena
         this.scale.set(0.25, 0.25, 0.25);
+        this.position.y = 0.15;
     }
 
 
     createCampana() {
         const radioBase = 0.25;
         const altura = 0.5;
-        //Vamos a crearla por revolución.
+   
         const puntos = [
             new THREE.Vector2(radioBase,0),
-            new THREE.Vector2(0.15,0.2),
-            new THREE.Vector2(0.15,0.3),
-            new THREE.Vector2(0.15,0.4),
-            new THREE.Vector2(0.10,0.45),
-            new THREE.Vector2(0.05,0.475),
+            new THREE.Vector2(0.20,0.05),
+            new THREE.Vector2(0.16,0.15),
+            new THREE.Vector2(0.15,0.30),
+            new THREE.Vector2(0.12,0.42),
+            new THREE.Vector2(0.05,0.48),
             new THREE.Vector2(0,altura)
         ]
 
-
         var geometria = new THREE.LatheGeometry(puntos,32);
-        var material = new THREE.MeshPhongMaterial({color: 0xFF0000});
+        var material = new THREE.MeshPhongMaterial({
+            color: 0xFFD700,
+            shininess: 120,
+            side: THREE.DoubleSide
+        });
+
         var campana = new THREE.Mesh(geometria, material);
         return campana;
         
     }
 
-    createInterior(){
-        const radioBaseInterior = 0.2;
-        const altura = 0.5;
+    createBadajo(){
+        const badajo = new THREE.Object3D();
 
-        //Vamos a crear lo interior
-        const puntosInterior = [
-            new THREE.Vector2(0,0),
-            new THREE.Vector2(radioBaseInterior,0),
-            new THREE.Vector2(radioBaseInterior - 0.05,0.02),
-            new THREE.Vector2(radioBaseInterior - 0.05,0.03),
-            new THREE.Vector2(radioBaseInterior - 0.05,0.04),
-            new THREE.Vector2(radioBaseInterior - 0.15,0.045),
-            new THREE.Vector2(0,altura - 0.05),
-            new THREE.Vector2(0,altura)
-        ]
+        const cilindroGeom = new THREE.CylinderGeometry(0.008,0.008,0.50,8);
+        const material = new THREE.MeshPhongMaterial({
+             color: 0x8B4513,
+             shininess: 120,
+            side: THREE.DoubleSide
+         });
+        const varilla = new THREE.Mesh(cilindroGeom, material);
+        badajo.add(varilla); 
 
-        var geometriaInterior = new THREE.LatheGeometry(puntosInterior,32);
-        var materialInterior = new THREE.MeshPhongMaterial({color: 0x0000FF});
-        var interior = new THREE.Mesh(geometriaInterior, materialInterior);
-        return interior;
+        const esferaGeom = new THREE.SphereGeometry(0.02,8,8);
+        const esfera = new THREE.Mesh(esferaGeom, material);
+        const bola = new THREE.Mesh(esferaGeom, material);
+        bola.position.y = -0.25;
+        badajo.add(bola);
+
+        return badajo; 
     }
 
+    createGUI(gui, titleGui) {
+        const folder = gui.addFolder(titleGui);
 
-    update(){}
+        this.guiControls = {
+            'Animación': false,
+            'Velocidad': 0.01,
+            'Ángulo Máximo': 30
+        }
 
+        folder.add(this.guiControls, 'Animación').name('Animación');
+        folder.add(this.guiControls, 'Velocidad', 0.01, 0.1, 0.01).name('Velocidad');
+        folder.add(this.guiControls, 'Ángulo Máximo', 0, 90, 0.01).name('Ángulo Máximo');
+    }
+
+    update() {
+        if (!this.guiControls['Animación']) return;
+
+        const anguloMaxRad = THREE.MathUtils.degToRad(this.guiControls['Ángulo Máximo']);
+        
+        // La campana se balancea normalmente
+        this.anguloActual += this.guiControls['Velocidad'] * this.sentido;
+        if (Math.abs(this.anguloActual) >= anguloMaxRad) {
+            this.sentido *= -1;
+            this.anguloActual = Math.sign(this.anguloActual) * anguloMaxRad;
+        }
+        this.articulacionCampana.rotation.z = this.anguloActual;
+
+        const diferencia = this.anguloActual - this.anguloBadajo;
+        this.anguloBadajo += diferencia * 0.08;  // 0.08 = "peso" del badajo
+
+        this.articulacionBadajo.rotation.z = this.anguloBadajo - this.anguloActual;
+    }
 }
 
 export { Campana };
