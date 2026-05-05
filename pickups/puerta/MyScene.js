@@ -8,7 +8,7 @@ import { TrackballControls } from 'trackball'
 
 // Clases de mi proyecto
 
-import { Grapadora } from './Grapadora.js'
+import { Puerta } from './Puerta.js'
 
  
 /// La clase fachada del modelo
@@ -38,7 +38,7 @@ class MyScene extends THREE.Scene {
     this.createCamera ();
     
     // Un suelo 
-    this.createGround ();
+   // this.createGround ();
     
     // Y unos ejes. Imprescindibles para orientarnos sobre dónde están las cosas
     // Todas las unidades están en metros
@@ -49,7 +49,7 @@ class MyScene extends THREE.Scene {
     // Por último creamos el modelo.
     // El modelo puede incluir su parte de la interfaz gráfica de usuario. Le pasamos la referencia a 
     // la gui y el texto bajo el que se agruparán los controles de la interfaz que añada el modelo.
-    this.model = new Grapadora(this.gui, "Controles de la Grapadora");
+    this.model = new Puerta(this.gui, "Controles de la puerta");
     this.add (this.model);
   }
   
