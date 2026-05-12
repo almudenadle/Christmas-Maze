@@ -90,7 +90,7 @@ class MyScene extends THREE.Scene {
       this.pickupStatus = [];
       this.pickups.forEach(pickup => {
         let nombre = '';
-        if (pickup instanceof coponieve) nombre = '❄️ Llave';
+        if (pickup instanceof coponieve) nombre = '🔑 Llave';
         else if (pickup instanceof Regalo) nombre = '🎁 Regalo';
         else if (pickup instanceof Chimenea) nombre = '🔥 Chimenea';
         else if (pickup instanceof Campana) nombre = '🔔 Campana';
@@ -192,7 +192,7 @@ class MyScene extends THREE.Scene {
         }
 
         if (tipoEncontrado && this.pickupStatus) {
-          const estado = this.pickupStatus.find(item => item.nombre === tipoEncontrado);
+          const estado = this.pickupStatus.find(item => item.objeto === pickup);
           if (estado && !estado.collected) {
             estado.collected = true;
             this.updatePickupUI();
