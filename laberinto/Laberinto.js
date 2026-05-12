@@ -4,6 +4,7 @@ import { Puerta } from '../pickups/puerta/Puerta.js'
 import { coponieve } from '../pickups/coponieve/coponieve.js'
 import { Regalo } from '../pickups/regalo/regalo.js';
 import { Chimenea } from '../pickups/chimenea/chimenea.js';
+import { Campana } from '../pickups/campana/campana.js';
 
 
 class Laberinto extends THREE.Object3D {
@@ -15,7 +16,7 @@ class Laberinto extends THREE.Object3D {
   static LLAVE = "L";
   static REGALO = "R";
   static CHIMENEA = "C";
-  
+  static CAMPANA = "B"; //Ponemos b de bell pq la c ya esta
   constructor (archivo, sincronizacion=null) {
     super();
     
@@ -93,6 +94,16 @@ class Laberinto extends THREE.Object3D {
               unBloque = new coponieve();
               unBloque.scale.set(5,5,5);
               unBloque.position.set(columna*this.anchoBloque,0.15, fila*this.anchoBloque);
+              this.add(unBloque);
+              this.posicionesPickUp.push(unBloque);
+              break;
+
+            case Laberinto.CAMPANA :
+              this.filaB = fila;
+              this.columnaB = columna;
+              unBloque = new Campana();
+              unBloque.scale.set(1, 1, 1);
+              unBloque.position.set(columna*this.anchoBloque,0.95,fila*this.anchoBloque);
               this.add(unBloque);
               this.posicionesPickUp.push(unBloque);
               break;

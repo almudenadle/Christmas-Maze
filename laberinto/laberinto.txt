@@ -11,5 +11,5 @@ X X   X       X
 X XXXXX XXXXX X
 X       X   C X
 X XXXXXXXXX   X
-X        X   LX
+X        XB  LX
 XXXXXXXXXXX SXX
