@@ -11,11 +11,11 @@ class Chimenea extends THREE.Object3D {
     if (gui) this.createGUI(gui, titleGui);
 
     // Material
-    this.textura = new THREE.TextureLoader().load('../imgs/piedra.jpg');
+    this.textura = new THREE.TextureLoader().load('../../imgs/piedra.jpg');
     this.material = new THREE.MeshStandardMaterial({ map: this.textura });
 
     //como usamos extrusion para la columna hacemos que se repita la textura para que no se estire
-    this.texturaColumna = new THREE.TextureLoader().load('../imgs/piedra.jpg');
+    this.texturaColumna = new THREE.TextureLoader().load('../../imgs/piedra.jpg');
     this.texturaColumna.wrapS = THREE.RepeatWrapping;
     this.texturaColumna.wrapT = THREE.RepeatWrapping;
     this.texturaColumna.repeat.set(10, 10);
@@ -99,10 +99,10 @@ class Chimenea extends THREE.Object3D {
 
     // Creacion de troncos 
     var geoTronco = new THREE.CylinderGeometry(tamano * 0.04, tamano * 0.04, tamano * 0.3, 5);
-    var matTronco = new THREE.MeshStandardMaterial({
-        color: 0x4A2F1D,
-        roughness: 1,
-        clearcoat: 1
+
+    var matTronco = new THREE.MeshPhysicalMaterial({
+      color: 0x4A2F1D,
+      roughness: 1.0,
     });
 
     var tronco1 = new THREE.Mesh(geoTronco, matTronco);
@@ -131,8 +131,8 @@ class Chimenea extends THREE.Object3D {
 
       let matLlama = new THREE.MeshStandardMaterial({
         color: colores[i],
-        emissive: colores[i],          
-        emissiveIntensity:0.6 + i * 0.2, // más intensidad en capas externas (0.6, 0.8, 1.0)
+        emissive: colores[i],
+        emissiveIntensity: 0.6 + i * 0.2, // más intensidad en capas externas (0.6, 0.8, 1.0)
         opacity: 0.7,
         depthWrite: false,
         blending: THREE.AdditiveBlending //  Suma los colores para crear un núcleo brillante

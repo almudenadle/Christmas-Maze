@@ -16,7 +16,7 @@ class Regalo extends THREE.Object3D{
             }
         }
 
-        const textura = new THREE.TextureLoader().load('../imgs/patron.jpg');
+        const textura = new THREE.TextureLoader().load('../../imgs/patron.jpg');
 
         var tamano = 0.1;  
 

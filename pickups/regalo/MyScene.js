@@ -8,8 +8,7 @@ import { TrackballControls } from 'trackball'
 
 // Clases de mi proyecto
 
-import { Regalo } from './Regalo.js'
-
+import { Regalo } from './regalo.js'
  
 /// La clase fachada del modelo
 /**

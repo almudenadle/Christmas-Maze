@@ -101,7 +101,7 @@ class Puerta extends THREE.Object3D {
     //Bisagra
     geometriaPuerta.translate(-radioArcoInterior, 0, 0);
 
-    const texturaPuertaInterior = loader.load('../imgs/patron.jpg');
+    const texturaPuertaInterior = loader.load('../../imgs/patron.jpg');
     //hacemos que se repita
     texturaPuertaInterior.wrapS = THREE.RepeatWrapping;
     texturaPuertaInterior.wrapT = THREE.RepeatWrapping;
@@ -139,9 +139,9 @@ class Puerta extends THREE.Object3D {
   cargarKnob() {
     var materialLoader = new MTLLoader();
     var objectLoader = new OBJLoader();
-    materialLoader.load('../models/knob/Blank.mtl', (materials) => {
+    materialLoader.load('../../models/knob/Blank.mtl', (materials) => {
       objectLoader.setMaterials(materials);
-      objectLoader.load('../models/knob/Knob.obj', (object) => {
+      objectLoader.load('../../models/knob/Knob.obj', (object) => {
         object.scale.set(0.008, 0.008, 0.008);
         //rotamos el knob para que quede orientado como una manilla de puerta
         //si pusiesemos pi/2 quedaria del reves,asi que no ponemos eso
@@ -206,7 +206,7 @@ class Puerta extends THREE.Object3D {
     const geometriaRosco = new THREE.ExtrudeGeometry(formaRosco, opcionesBarrido);
 
 
-    this.texturaRosco = new THREE.TextureLoader().load('../imgs/hojas.jpg');
+    this.texturaRosco = new THREE.TextureLoader().load('../../imgs/hojas.jpg');
 
     this.texturaRosco.wrapT = THREE.RepeatWrapping;
     this.texturaRosco.wrapS = THREE.RepeatWrapping;
@@ -261,7 +261,7 @@ class Puerta extends THREE.Object3D {
       bolaBrush.position.set(
         this.mallaRosco.position.x + (posicion.x * 0.3), 
         this.mallaRosco.position.y + (posicion.y * 0.3), 
-        this.mallaRosco.position.z + 0.07
+        this.mallaRosco.position.z + 0.05
       );
       
       bolaBrush.updateMatrixWorld();

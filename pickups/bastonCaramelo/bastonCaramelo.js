@@ -7,7 +7,7 @@ class BastonCaramelo extends THREE.Object3D {
         super();
         //this.createGUI(gui, titleGui);
 
-        this.textura = new THREE.TextureLoader().load('../imgs/baston-caramelo.jpg');
+        this.textura = new THREE.TextureLoader().load('../../imgs/baston-caramelo.jpg');
         this.materialBaston = new THREE.MeshPhongMaterial({ 
             map: this.textura,
             emissive: new THREE.Color(0x222222)  // luz propia mínima
