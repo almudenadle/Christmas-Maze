@@ -23,9 +23,9 @@ class Puerta extends THREE.Object3D {
 
 
   createPuerta() {
-    const lado = 0.3; // Grosor de la puerta
+    const lado = 0.22; // Grosor de la puerta
     const altoRecto = 0.8; // Altura de los tramos verticales
-    const radioArco = 0.7; // Radio del arco superior
+    const radioArco = 0.37; // Radio del arco superior
     const puntos = []; //Recorrido del marco de la puerta
     const puntosPuerta = []; //Recorrido de la puerta interior 
 
@@ -114,6 +114,10 @@ class Puerta extends THREE.Object3D {
     //como movimos la geometria,movemos el mesh
     this.puertaInterior.position.x = radioArcoInterior;
 
+    //movemos la puerta un poco hacia el lado
+    this.marcoPuerta.position.x -= 0.25;
+    this.puertaInterior.position.x -= 0.25;
+
     this.createRosco();
     this.add(this.marcoPuerta);
 
@@ -138,13 +142,13 @@ class Puerta extends THREE.Object3D {
     materialLoader.load('../models/knob/Blank.mtl', (materials) => {
       objectLoader.setMaterials(materials);
       objectLoader.load('../models/knob/Knob.obj', (object) => {
-        object.scale.set(0.01, 0.01, 0.01);
+        object.scale.set(0.008, 0.008, 0.008);
         //rotamos el knob para que quede orientado como una manilla de puerta
         //si pusiesemos pi/2 quedaria del reves,asi que no ponemos eso
         object.rotation.x = Math.PI / 2;
         object.rotation.z = Math.PI;
         //lo situamos acorde a la puerta, para eso lo movemos a la mitad de la altura de la puerta y un poco hacia afuera
-        object.position.set(-0.9, 0.6, 0.175);
+        object.position.set(-0.45, 0.46, 0.14);
 
         this.puertaInterior.add(object);
       });
@@ -152,14 +156,6 @@ class Puerta extends THREE.Object3D {
   }
 
   abrirPuerta() {
-    // Alternamos entre abierta (-90 grados) y cerrada (0 grados)
-    /*
-    if (this.rotacionObjetivo === 0) {
-      this.rotacionObjetivo = -Math.PI / 2; // Hacia adentro
-    } else {
-      this.rotacionObjetivo = 0; // Cerrada
-    }
-    */
     this.rotacionObjetivo = -Math.PI / 2; // Hacia adentro
   }
 
@@ -220,8 +216,8 @@ class Puerta extends THREE.Object3D {
 
     this.mallaRosco = new THREE.Mesh(geometriaRosco, materialRosco);
 
-    this.mallaRosco.scale.set(0.3, 0.3, 0.3);
-    this.mallaRosco.position.set(-0.55, 0.9, 0.22);
+    this.mallaRosco.scale.set(0.25, 0.25, 0.25);
+    this.mallaRosco.position.set(-0.275, 0.69, 0.17);
 
     this.crearBolasNavidad(caminoBarrer);
 
