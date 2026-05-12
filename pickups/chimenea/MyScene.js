@@ -8,8 +8,7 @@ import { TrackballControls } from 'trackball'
 
 // Clases de mi proyecto
 
-import { Chimenea } from './Chimenea.js'
-
+import { Chimenea } from './chimenea.js'
  
 /// La clase fachada del modelo
 /**

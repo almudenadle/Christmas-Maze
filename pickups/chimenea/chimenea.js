@@ -8,7 +8,7 @@ class Chimenea extends THREE.Object3D {
     super();
 
     // Se crea la parte de la interfaz que corresponde a la chimenea
-    if(gui) this.createGUI(gui, titleGui);
+    if (gui) this.createGUI(gui, titleGui);
 
     // Material
     this.textura = new THREE.TextureLoader().load('../imgs/piedra.jpg');
@@ -99,7 +99,11 @@ class Chimenea extends THREE.Object3D {
 
     // Creacion de troncos 
     var geoTronco = new THREE.CylinderGeometry(tamano * 0.04, tamano * 0.04, tamano * 0.3, 5);
-    var matTronco = new THREE.MeshStandardMaterial({ color: 0x4A2F1D });
+    var matTronco = new THREE.MeshStandardMaterial({
+        color: 0x4A2F1D,
+        roughness: 1,
+        clearcoat: 1
+    });
 
     var tronco1 = new THREE.Mesh(geoTronco, matTronco);
     tronco1.rotation.z = Math.PI / 2;
@@ -123,11 +127,14 @@ class Chimenea extends THREE.Object3D {
       // Movemos la geometría para que su centro esté en la base
       geoLlama.translate(0, (tamano * alturas[i]) / 2, 0);
 
+
+
       let matLlama = new THREE.MeshStandardMaterial({
         color: colores[i],
-        // emissive: colores[i],       
+        emissive: colores[i],          
+        emissiveIntensity:0.6 + i * 0.2, // más intensidad en capas externas (0.6, 0.8, 1.0)
         opacity: 0.7,
-        depthWrite: false,          // Permite ver los conos interiores
+        depthWrite: false,
         blending: THREE.AdditiveBlending //  Suma los colores para crear un núcleo brillante
       });
 
