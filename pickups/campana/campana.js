@@ -4,13 +4,13 @@ import * as CSG from '../../libs/three-bvh-csg.js'
 class Campana extends THREE.Object3D {
     constructor(gui = null, titleGui = '') {
         super();
-        if(gui) this.createGUI(gui, titleGui);
+        if (gui) this.createGUI(gui, titleGui);
 
         this.articulacionCampana = new THREE.Object3D();
         this.add(this.articulacionCampana);
 
         var campana = this.createCampana();
-        campana.position.y = -0.5; 
+        campana.position.y = -0.5;
         this.articulacionCampana.add(campana);
 
         this.articulacionBadajo = new THREE.Object3D();
@@ -35,48 +35,58 @@ class Campana extends THREE.Object3D {
     createCampana() {
         const radioBase = 0.25;
         const altura = 0.5;
-   
+
         const puntos = [
-            new THREE.Vector2(radioBase,0),
-            new THREE.Vector2(0.20,0.05),
-            new THREE.Vector2(0.16,0.15),
-            new THREE.Vector2(0.15,0.30),
-            new THREE.Vector2(0.12,0.42),
-            new THREE.Vector2(0.05,0.48),
-            new THREE.Vector2(0,altura)
+            new THREE.Vector2(radioBase, 0),
+            new THREE.Vector2(0.20, 0.05),
+            new THREE.Vector2(0.16, 0.15),
+            new THREE.Vector2(0.15, 0.30),
+            new THREE.Vector2(0.12, 0.42),
+            new THREE.Vector2(0.05, 0.48),
+            new THREE.Vector2(0, altura)
         ]
 
-        var geometria = new THREE.LatheGeometry(puntos,32);
-        var material = new THREE.MeshPhongMaterial({
+        var geometria = new THREE.LatheGeometry(puntos, 32);
+        // var material = new THREE.MeshPhongMaterial({
+        //     color: 0xFFD700,
+        //     shininess: 120,
+        //     side: THREE.DoubleSide
+        // });
+
+        var material = new THREE.MeshStandardMaterial({
             color: 0xFFD700,
-            shininess: 120,
+            metalness: 0.95,   // valor alto para que sea muy metálico
+            roughness: 0.25,   // bajo para que refleje más
             side: THREE.DoubleSide
         });
 
         var campana = new THREE.Mesh(geometria, material);
         return campana;
-        
+
     }
 
-    createBadajo(){
+    createBadajo() {
         const badajo = new THREE.Object3D();
 
-        const cilindroGeom = new THREE.CylinderGeometry(0.008,0.008,0.50,8);
-        const material = new THREE.MeshPhongMaterial({
-             color: 0x8B4513,
-             shininess: 120,
-            side: THREE.DoubleSide
-         });
-        const varilla = new THREE.Mesh(cilindroGeom, material);
-        badajo.add(varilla); 
+        const cilindroGeom = new THREE.CylinderGeometry(0.008, 0.008, 0.50, 8);
 
-        const esferaGeom = new THREE.SphereGeometry(0.02,8,8);
+        var material = new THREE.MeshStandardMaterial({
+            color: 0xFFD700,
+            metalness: 0.95,
+            roughness: 0.25,
+            side: THREE.DoubleSide
+        });
+
+        const varilla = new THREE.Mesh(cilindroGeom, material);
+        badajo.add(varilla);
+
+        const esferaGeom = new THREE.SphereGeometry(0.02, 8, 8);
         const esfera = new THREE.Mesh(esferaGeom, material);
         const bola = new THREE.Mesh(esferaGeom, material);
         bola.position.y = -0.25;
         badajo.add(bola);
 
-        return badajo; 
+        return badajo;
     }
 
     createGUI(gui, titleGui) {
@@ -97,7 +107,7 @@ class Campana extends THREE.Object3D {
         if (!this.guiControls['Animación']) return;
 
         const anguloMaxRad = THREE.MathUtils.degToRad(this.guiControls['Ángulo Máximo']);
-        
+
         // La campana se balancea normalmente
         this.anguloActual += this.guiControls['Velocidad'] * this.sentido;
         if (Math.abs(this.anguloActual) >= anguloMaxRad) {
