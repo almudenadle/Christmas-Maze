@@ -5,6 +5,7 @@ import { coponieve } from '../pickups/coponieve/coponieve.js'
 import { Regalo } from '../pickups/regalo/regalo.js';
 import { Chimenea } from '../pickups/chimenea/chimenea.js';
 import { Campana } from '../pickups/campana/campana.js';
+import { Reno } from '../pickups/reno/reno.js';
 
 
 class Laberinto extends THREE.Object3D {
