@@ -10,6 +10,7 @@ import { coponieve } from '../pickups/coponieve/coponieve.js'
 import { Regalo } from '../pickups/regalo/regalo.js'
 import { Chimenea } from '../pickups/chimenea/chimenea.js'
 import { Campana } from '../pickups/campana/campana.js'
+import { Reno } from '../pickups/reno/reno.js'
 import { Player } from '../player/player.js'
 import { Puerta } from '../pickups/puerta/Puerta.js'
 
@@ -93,6 +94,7 @@ class MyScene extends THREE.Scene {
         else if (pickup instanceof Regalo) nombre = '🎁 Regalo';
         else if (pickup instanceof Chimenea) nombre = '🔥 Chimenea';
         else if (pickup instanceof Campana) nombre = '🔔 Campana';
+        else if (pickup instanceof Reno) nombre = '🦌 Reno';
         if (nombre) {
           this.pickupStatus.push({ nombre, collected: false, objeto: pickup });
         }
@@ -188,6 +190,9 @@ class MyScene extends THREE.Scene {
         } else if (pickup instanceof Campana) {
           tipoEncontrado = '🔔 Campana';
           console.log('¡Has recogido la campana!');
+        } else if (pickup instanceof Reno) {
+          tipoEncontrado = '🦌 Reno';
+          console.log('¡Has recogido al reno!');
         }
 
         if (tipoEncontrado && this.pickupStatus) {

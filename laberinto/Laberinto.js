@@ -139,6 +139,9 @@ class Laberinto extends THREE.Object3D {
               this.reno.position.set(columna*this.anchoBloque,0, fila*this.anchoBloque);
               this.add(this.reno);
 
+              // Treat reno also as a pickup so MyScene can list and collect it
+              this.posicionesPickUp.push(this.reno);
+
               this.renosPatrulla = this.renosPatrulla || [];
               this.renosPatrulla.push(this.reno);
               break;

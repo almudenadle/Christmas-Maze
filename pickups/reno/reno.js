@@ -17,9 +17,7 @@ class Reno extends THREE.Object3D {
     
     this.renoGroup = new THREE.Group();
 
-    // =========================================================
-    // TÉCNICA 1: REVOLUCIÓN (Cuerpo principal con volumen)
-    // =========================================================
+ //el cuerpo esta hecho con revolucion 
     const puntosCuerpo = [
       new THREE.Vector2(0, 0),       
       new THREE.Vector2(0.18, 0.1),  
@@ -35,9 +33,7 @@ class Reno extends THREE.Object3D {
     this.renoGroup.add(cuerpo);
 
 
-    // =========================================================
-    // TÉCNICA 2: EXTRUSIÓN (Patas con 2 GRADOS DE LIBERTAD)
-    // =========================================================
+//las patas estan hechas con extrusion
     const formaPierna = new THREE.Shape();
     formaPierna.moveTo(-0.03, 0);
     formaPierna.lineTo(0.03, 0);
@@ -82,9 +78,8 @@ class Reno extends THREE.Object3D {
     crearPierna(-0.15, -0.35, 0);      
 
 
-    // =========================================================
-    // LA CABEZA, OJOS Y CUERNOS RAMIFICADOS
-    // =========================================================
+   
+    // hacemos otro grupo
     this.cuelloGroup = new THREE.Group();
     this.cuelloGroup.position.set(0, 0.65, 0.15); 
 
@@ -104,7 +99,7 @@ class Reno extends THREE.Object3D {
     nariz.position.set(0, 0.25, 0.28); 
     this.cuelloGroup.add(nariz);
 
-    // --- NUEVO: OJOS ---
+    //ojos
     const geoOjo = new THREE.BoxGeometry(0.03, 0.03, 0.03);
     
     const ojoIzq = new THREE.Mesh(geoOjo, matOjo);
@@ -116,8 +111,7 @@ class Reno extends THREE.Object3D {
     ojoDer.position.set(-0.085, 0.28, 0.2); 
     this.cuelloGroup.add(ojoDer);
 
-    // --- NUEVO: CUERNOS RAMIFICADOS ---
-    // Función para crear un cuerno con ramas
+    // creo un cuerno con ramas
     const crearCuerno = (esIzquierdo) => {
       const cuernoGroup = new THREE.Group();
       
@@ -126,14 +120,14 @@ class Reno extends THREE.Object3D {
       tallo.position.y = 0.125; // Subimos el centro para que rote desde la base
       cuernoGroup.add(tallo);
 
-      // Rama lateral 1 (hacia afuera)
+      // Rama lateral 1 
       const rama1 = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.12, 0.02), matOscuro);
       rama1.position.set(esIzquierdo ? 0.03 : -0.03, 0.12, 0.02);
       rama1.rotation.z = esIzquierdo ? -Math.PI / 4 : Math.PI / 4;
       rama1.rotation.x = Math.PI / 8; // Inclinada un poco hacia adelante
       cuernoGroup.add(rama1);
 
-      // Rama lateral 2 (hacia adentro y arriba)
+      // Rama lateral 2 
       const rama2 = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.08, 0.02), matOscuro);
       rama2.position.set(esIzquierdo ? -0.02 : 0.02, 0.18, -0.01);
       rama2.rotation.z = esIzquierdo ? Math.PI / 4 : -Math.PI / 4;
@@ -157,7 +151,7 @@ class Reno extends THREE.Object3D {
     this.add(this.renoGroup);
   }
 
-  // --- ANIMACIÓN ---
+  
   update() {
     const tiempo = Date.now() * 0.005;
 
