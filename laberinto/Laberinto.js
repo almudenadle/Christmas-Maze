@@ -17,6 +17,8 @@ class Laberinto extends THREE.Object3D {
   static REGALO = "R";
   static CHIMENEA = "C";
   static CAMPANA = "B"; //Ponemos b de bell pq la c ya esta
+  static RENOS = "N";
+  
   constructor (archivo, sincronizacion=null) {
     super();
     
@@ -122,11 +124,24 @@ class Laberinto extends THREE.Object3D {
               this.cC = columna;
               this.fC = fila;
               unBloque = new Chimenea();
-              unBloque.scale.set(10,10,10);
+              unBloque.scale.set(7,7,7);
               unBloque.position.set(columna*this.anchoBloque,0.15, fila*this.anchoBloque);
               this.add(unBloque);
               this.posicionesPickUp.push(unBloque);
-          }
+              break;
+
+            case Laberinto.RENOS :
+              this.fN = fila;
+              this.cN = columna;
+              console.log('Reno encontrado en fila:', fila, 'columna:', columna);
+              this.reno = new Reno();
+              this.reno.position.set(columna*this.anchoBloque,0, fila*this.anchoBloque);
+              this.add(this.reno);
+
+              this.renosPatrulla = this.renosPatrulla || [];
+              this.renosPatrulla.push(this.reno);
+              break;
+          } 
         }
       }
       // Para centrar el laberinto completo con respecto al sistema de coordenadas
@@ -137,8 +152,7 @@ class Laberinto extends THREE.Object3D {
       
       this.getMundoFromCelda(this.filaEntrada,this.ColumnaEntrada,this.posIncio);
       this.getMundoFromCelda(this.filaSalida,this.ColumnaSalida,this.posFinal);
-      //this.getMundoFromCelda(this.filaC,this.columnaC,this.posLlave);
-      //this.getMundoFromCelda(this.fR,this.cR,this.posR);
+
       this.laberintoMatriz = laberintoMatriz;
 
       if (sincronizacion)
@@ -174,7 +188,7 @@ class Laberinto extends THREE.Object3D {
       return;
     }
     const celda = this.laberintoMatriz[f][c];
-    return celda !== 'X';
+    return celda !== 'X' && celda !== 'E';
   }
 
   getFilaEntrada(){ return this.filaEntrada }
@@ -182,7 +196,54 @@ class Laberinto extends THREE.Object3D {
   getPosInicial(){ return this.posIncio; }
   getPosFinal(){ return this.posFinal; }
 
-  update () {}
+  update () {
+    if(this.reno) this.reno.update();
+    
+    for(const reno of this.renosPatrulla){
+      this.reno.update();
+    }
+  }
+
+  /*
+  _actualizarPosicionReno(reno){
+    const patrulla = reno._patrulla;
+
+    const objetivoX = patrulla.colObjetivo * this.anchoBloque;
+    const objetivoZ = patrulla.filaObjetivo * this.anchoBloque;
+
+    const dx = objetivoX - reno.position.x;
+    const dz = objetivoZ - reno.position.z;
+    const distancia = Math.sqrt(dx*dx + dz*dz);
+
+    if (distancia < 0.05) {
+      reno.filaAct = patrulla.filaObjetivo;
+      reno.colAct = patrulla.colObjetivo;
+      this._elegirNuevoObjetivo(patrulla);
+    } else {
+      const pasoX = (dx / distancia) * patrulla.velocidad;
+      const pasoZ = (dz / distancia) * patrulla.velocidad;
+      reno.position.x += pasoX;
+      reno.position.z += pasoZ;
+
+      reno.rotation.y = Math.atan2(pasoX, pasoZ);
+    }
+  }
+
+  _elegirNuevoObjetivo(patrulla){
+    const direcciones = [
+      { fila: patrulla.filaAct - 1, col: patrulla.colAct}, // Arriba
+      { fila: patrulla.filaAct + 1, col: patrulla.colAct}, // Abajo
+      { fila: patrulla.filaAct, col: patrulla.colAct - 1}, // Izquierda
+      { fila: patrulla.filaAct, col: patrulla.colAct + 1}  // Derecha
+    ];
+    
+    const transitables = direcciones.filter(d => this.esCeldaTransitable(d.fila, d.col));
+    console.log('Opciones transitables para el reno en fila:', patrulla.filaAct, 'columna:', patrulla.colAct, '->', transitables);
+    const elegido = transitables[Math.floor(Math.random() * transitables.length)];
+    patrulla.filaAnterior = elegido.fila;
+    patrulla.colAnterior = elegido.col;
+  }
+  */
 }
 
 export { Laberinto }

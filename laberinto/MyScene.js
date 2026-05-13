@@ -13,7 +13,6 @@ import { Campana } from '../pickups/campana/campana.js'
 import { Player } from '../player/player.js'
 import { Puerta } from '../pickups/puerta/Puerta.js'
 
-
 class MyScene extends THREE.Scene {
   constructor (myCanvas) { 
     super();
