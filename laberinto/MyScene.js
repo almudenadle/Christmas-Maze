@@ -70,6 +70,7 @@ class MyScene extends THREE.Scene {
     this.add(this.laberinto);
     this.pickups = [];
     this.obstaculos = [];
+    this.obstPickups = [];
 
     laberintoCargado.done(() => {
       const posIncio = this.laberinto.getPosInicial();
@@ -77,12 +78,6 @@ class MyScene extends THREE.Scene {
       const anchoTotal = this.laberinto.xNumBloques * this.laberinto.anchoBloque;
       const largoTotal = this.laberinto.zNumBloques * this.laberinto.anchoBloque;
 
-      // Recoger todos los muros como obstáculos
-      this.laberinto.traverse((hijo) => {
-        if (hijo.isMesh) {
-          this.obstaculos.push(hijo);
-        }
-      });
       this.pickups = this.laberinto.posicionesPickUp;
       this.tengoLlave = false;
 
@@ -100,6 +95,21 @@ class MyScene extends THREE.Scene {
         }
       });
       this.updatePickupUI();  // mostrar panel inicial
+
+      this.laberinto.traverse((hijo) => {
+        if (hijo.isMesh) {
+          this.obstaculos.push(hijo);
+        }
+      });
+
+      this.pickups.forEach(p => {
+        p.traverse((hijo) => {
+          if (hijo.isMesh) {
+            this.obstPickups.push(hijo);
+          }
+        });
+      });
+
 
       // Cámaras y jugador
       this.createCamera();
@@ -387,7 +397,7 @@ class MyScene extends THREE.Scene {
     this.renderer.render(this, this.getCamera());
     
     if (this.jugador) {
-      this.jugador.update(this.teclasPulsadas, this.laberinto, this.obstaculos);
+      this.jugador.update(this.teclasPulsadas, this.laberinto, this.obstPickups, this.obstaculos);
       this.actualizarCamara();
     }
     if (this.puertaAbierta && this.puerta) this.puerta.update();

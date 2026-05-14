@@ -4,7 +4,7 @@ class Player extends THREE.Object3D{
 
     static VELOCIDAD = 0.03;
     static VEL_GIRO = 0.03;
-    static RADIO = 0.4;
+    static RADIO = 0.6;
 
     constructor(){
         super();
@@ -12,6 +12,7 @@ class Player extends THREE.Object3D{
 
         this.raycaster = new THREE.Raycaster();
         this.raycaster.far = Player.RADIO;
+ 
 
         const geometria = new THREE.CylinderGeometry(0.2, 0.2, 0.5, 32);
         const material = new THREE.MeshStandardMaterial({color: 0x0000FF});
@@ -20,7 +21,7 @@ class Player extends THREE.Object3D{
         this.add(cilindro);
     }
 
-    update(teclas,laberinto,obstaculos){
+    update(teclas,laberinto,pickups,muros){
         //Giros
         if( teclas['a'] || teclas['ArrowLeft']) this.angulo += Player.VEL_GIRO;
         if( teclas['d'] || teclas['ArrowRight']) this.angulo -= Player.VEL_GIRO;
@@ -52,10 +53,24 @@ class Player extends THREE.Object3D{
             origen.y += 1.0; // Ajustar la altura del origen del rayo
 
             this.raycaster.set(origen, direccion);
+            const chocaMuro = this.raycaster.intersectObjects(muros, true).length > 0;
 
-            const intersecciones = this.raycaster.intersectObjects(obstaculos, true);
+            const posJugador = new THREE.Vector3();
+            this.getWorldPosition(posJugador);
+            const chocaPickup = pickups.some(p => {
+                const posPickup = new THREE.Vector3();
+                p.getWorldPosition(posPickup);
+                const distancia = posJugador.distanceTo(posPickup);
 
-            if (intersecciones.length === 0) {
+                if(distancia >= Player.RADIO) return false; 
+                
+                const haciaPickup = posPickup.clone().sub(posJugador).normalize();
+                const acercandose = haciaPickup.dot(direccion) > 0;
+                return acercandose;
+            });
+            
+            console.log('Choca muro:', chocaMuro, 'Choca pickup:', chocaPickup);
+            if ( !chocaMuro && !chocaPickup) {
                 this.position.x += direccion.x * Player.VELOCIDAD;
                 this.position.z += direccion.z * Player.VELOCIDAD;
             }

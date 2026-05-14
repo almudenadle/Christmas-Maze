@@ -1,19 +1,22 @@
 import * as THREE from 'three';
 
 class Muro extends THREE.Object3D {
-    constructor(ancho = 1, alto = 2, profundidad = 1,esVertical = false, esEsquina = false) {
+    constructor(ancho = 1, alto = 2, profundidad = 1,esVertical = false, esHorizontal = false) {
         super();
 
-        this._esquina = esEsquina;
         this._vertical = esVertical;
         this._ancho = ancho;
         this._alto = alto;
         this._profundidad = profundidad;
 
-        if(esEsquina){
-            this.createEsquina();
-        }else {
+        if(esVertical){
+            this._vertical = true;
             this.createTroncos();
+        }else if(esHorizontal){ 
+            this._vertical = false;  
+            this.createTroncos();
+        }else{
+            this.createEsquina();
         }
 
         this.createLuces();

@@ -73,10 +73,14 @@ class Laberinto extends THREE.Object3D {
                 ? laberintoMatriz[fila][columna + 1] === Laberinto.WALL
                 : false;
 
-              const esEsquina = (vecinoAbajo || vecinoArriba) && (vecinoDch || vecinoIzq);
-              const esVertical = (vecinoAbajo || vecinoArriba); 
+              const puertaDcha = (columna < this.xNumBloques - 1)
+                ? laberintoMatriz[fila][columna + 1] === Laberinto.START || laberintoMatriz[fila][columna + 1] === Laberinto.END
+                : false;
 
-              unBloque = new Muro(this.anchoBloque,this.altoBloque,this.anchoBloque, esVertical,esEsquina);
+              const esHorizontal = (vecinoIzq || vecinoDch) && !(vecinoArriba || vecinoAbajo) && !puertaDcha;
+              const esVertical = (vecinoAbajo || vecinoArriba) && !(vecinoIzq || vecinoDch) && !puertaDcha; 
+
+              unBloque = new Muro(this.anchoBloque,this.altoBloque,this.anchoBloque, esVertical,esHorizontal);
               unBloque.position.set (columna*this.anchoBloque, 0, fila*this.anchoBloque);
               this.add(unBloque);
               break;
