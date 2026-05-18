@@ -150,6 +150,14 @@ class Puerta extends THREE.Object3D {
         //lo situamos acorde a la puerta, para eso lo movemos a la mitad de la altura de la puerta y un poco hacia afuera
         object.position.set(-0.45, 0.46, 0.17);
 
+        // Marcamos el objeto del knob para poder identificarlo en raycasts
+        object.name = 'knob';
+        object.traverse((child) => {
+          if (child.isMesh) child.userData.isKnob = true;
+        });
+        // Guardamos referencia al knob en la puerta
+        this.knob = object;
+
         this.puertaInterior.add(object);
       });
     });

@@ -4,6 +4,8 @@ import * as THREE from 'three'
 import { GUI } from 'gui'
 import { TrackballControls } from 'trackball'
 import { PointerLockControls } from '../libs/PointerLockControls.js'
+import { RectAreaLightUniformsLib } from '../libs/RectAreaLightUniformsLib.js'
+import { RectAreaLightHelper } from '../libs/RectAreaLightHelper.js'
 
 // Clases de mi proyecto
 import { Laberinto } from './Laberinto.js'
@@ -123,6 +125,46 @@ class MyScene extends THREE.Scene {
       // AÑADIR ESTO TEMPORALMENTE:
       console.log('Meshes pickup excluidos:', meshesPickup.size);
       console.log('Obstáculos totales:', this.obstaculos.length);
+
+      // --- Crear tres RectAreaLights pequeñas enfocadas a la campana (si existe) ---
+      try {
+        const campanaPickup = this.pickups.find(p => p instanceof Campana);
+        if (campanaPickup) {
+          const targetPos = new THREE.Vector3();
+          campanaPickup.getWorldPosition(targetPos);
+
+          // colores: rojo, verde, azul
+          const colores = [0xff0000, 0x00ff00, 0x0000ff];
+          // offsets relativos a la campana para situar las luminarias cerca de ella
+          const offsets = [
+            new THREE.Vector3(-0.6, 1.2, 0.3),
+            new THREE.Vector3(0.6, 1.2, 0.3),
+            new THREE.Vector3(0, 1.2, -0.6)
+          ];
+
+          this.campanaLights = [];
+          for (let i = 0; i < 3; i++) {
+            // ancho y alto pequeños para afectar solo la campana
+            const rect = new THREE.RectAreaLight(colores[i], 1.0, 0.6, 0.4);
+            rect.power = 60; // ajustable: intensidad moderada
+
+            const pos = targetPos.clone().add(offsets[i]);
+            rect.position.copy(pos);
+            rect.lookAt(targetPos);
+
+            this.add(rect);
+
+            // ayuda visual para ver la orientación de cada luminaria
+            const helper = new RectAreaLightHelper(rect);
+            this.add(helper);
+
+            this.campanaLights.push(rect);
+          }
+          console.log('Tres RectAreaLights creadas para la campana en', targetPos);
+        }
+      } catch (err) {
+        console.warn('No se pudo crear RectAreaLights para la campana:', err);
+      }
 
       // Cámaras y jugador
       this.createCamera();
@@ -281,7 +323,20 @@ class MyScene extends THREE.Scene {
     this.mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
     this.raycaster.setFromCamera(this.mouse, this.camaraJugador);
     const intersects = this.raycaster.intersectObjects([this.puerta], true);
-    if (intersects.length > 0) {
+    let hitKnob = false;
+    for (let inter of intersects) {
+      let obj = inter.object;
+      // ascend the parent chain to see if any ancestor was marked as knob
+      while (obj) {
+        if (obj.userData && obj.userData.isKnob) {
+          hitKnob = true;
+          break;
+        }
+        obj = obj.parent;
+      }
+      if (hitKnob) break;
+    }
+    if (hitKnob) {
       this.abrirPuerta();
     }
   }
@@ -335,6 +390,8 @@ class MyScene extends THREE.Scene {
 
   //luces
   createLights() {
+    RectAreaLightUniformsLib.init();
+
     this.ambientLight = new THREE.AmbientLight('white', this.guiControls.ambientIntensity);
     this.add(this.ambientLight);
     this.pointLight = new THREE.SpotLight(0xffffff);
