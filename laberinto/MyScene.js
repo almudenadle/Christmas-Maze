@@ -5,7 +5,6 @@ import { GUI } from 'gui'
 import { TrackballControls } from 'trackball'
 import { PointerLockControls } from '../libs/PointerLockControls.js'
 import { RectAreaLightUniformsLib } from '../libs/RectAreaLightUniformsLib.js'
-import { RectAreaLightHelper } from '../libs/RectAreaLightHelper.js'
 
 // Clases de mi proyecto
 import { Laberinto } from './Laberinto.js'
@@ -138,7 +137,7 @@ class MyScene extends THREE.Scene {
           const colores = [0xff0000, 0x00ff00, 0x0000ff];
           // offsets relativos a la campana para situar las luminarias cerca de ella
           const offsets = [
-            new THREE.Vector3(-0.6, 0.8, 0.3),
+            new THREE.Vector3(-0.5, 0.8, 0.3),
             new THREE.Vector3(0.6, 0.8, 0.3),
             new THREE.Vector3(0, 0.8, -0.6)
           ];
@@ -154,13 +153,22 @@ class MyScene extends THREE.Scene {
 
             this.add(rect);
 
-            // helper visual para mostrar el rectángulo de la luz
-            try {
-              const helper = new RectAreaLightHelper(rect);
-              this.add(helper);
-              this.campanaHelpers = this.campanaHelpers || [];
-              this.campanaHelpers.push(helper);
-            } catch (e) { /* helper opcional */ }
+            // panel visible para que la luz no se vea como un rectángulo vacío
+            const panelGeo = new THREE.PlaneGeometry(0.6, 0.4);
+            const panelMat = new THREE.MeshBasicMaterial({
+              color: colores[i],
+              transparent: true,
+              opacity: 0.65,
+              side: THREE.DoubleSide,
+              depthWrite: false
+            });
+            const panel = new THREE.Mesh(panelGeo, panelMat);
+            panel.position.copy(pos);
+            panel.lookAt(targetPos);
+            panel.renderOrder = 10;
+            this.add(panel);
+            this.campanaPanels = this.campanaPanels || [];
+            this.campanaPanels.push(panel);
 
             this.campanaLights.push(rect);
           }
