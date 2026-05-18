@@ -3,6 +3,7 @@
 import * as THREE from 'three'
 import { GUI } from 'gui'
 import { TrackballControls } from 'trackball'
+import { PointerLockControls } from '../libs/PointerLockControls.js'
 
 // Clases de mi proyecto
 import { Laberinto } from './Laberinto.js'
@@ -26,11 +27,21 @@ class MyScene extends THREE.Scene {
     
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
-
-    window.addEventListener('click', (event) => { this.onMouseClick(event); });
     
     this.createLights();
-    
+
+    window.addEventListener('click', (e) => {
+      if (this.pointerLocker?.isLocked) return;
+      this.onMouseClick(e);
+      if (this.laberinto) {
+          this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+          this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+          this.raycaster.setFromCamera(this.mouse, this.getCamera());
+          const intersects = this.raycaster.intersectObjects(this.laberinto.children, true);
+          if (intersects.length > 0) this.recogerPickup();
+      }
+    });
+
     // Cámaras
     this.camaraActiva = null;
     window.addEventListener('keydown', (e) => {
@@ -96,23 +107,42 @@ class MyScene extends THREE.Scene {
       });
       this.updatePickupUI();  // mostrar panel inicial
 
+      const meshesPickup = new Set();
+        this.pickups.forEach(p => {
+            p.traverse((hijo) => {
+                if (hijo.isMesh) meshesPickup.add(hijo);
+            });
+      });
+
       this.laberinto.traverse((hijo) => {
-        if (hijo.isMesh) {
-          this.obstaculos.push(hijo);
-        }
-      });
-
-      this.pickups.forEach(p => {
-        p.traverse((hijo) => {
-          if (hijo.isMesh) {
-            this.obstPickups.push(hijo);
+          if (hijo.isMesh && !meshesPickup.has(hijo)) {
+              this.obstaculos.push(hijo);
           }
-        });
       });
-
+      
+      // AÑADIR ESTO TEMPORALMENTE:
+      console.log('Meshes pickup excluidos:', meshesPickup.size);
+      console.log('Obstáculos totales:', this.obstaculos.length);
 
       // Cámaras y jugador
       this.createCamera();
+      this.pointerLocker = new PointerLockControls(this.camaraJugador, this.renderer.domElement);
+
+      this.renderer.domElement.addEventListener('click', () => {
+          if (this.pointerLocker && this.camaraJugador &&!this.pointerLocker.isLocked) {
+              this.pointerLocker.lock();
+          }
+      });
+
+
+      window.addEventListener('keyup', (e) => {
+        if(e.key === 'Escape' && this.pointerLocker) {
+          this.pointerLocker.unlock();
+        }
+      }); 
+
+
+
       this.jugador = new Player();
       this.jugador.position.copy(posIncio);
       this.add(this.jugador);
@@ -216,6 +246,13 @@ class MyScene extends THREE.Scene {
         // Eliminar físicamente el objeto
         this.laberinto.remove(pickup);
         this.pickups.splice(i, 1);
+
+        pickup.traverse((hijo) => {
+          if (hijo.isMesh) {
+              const idx = this.obstaculos.indexOf(hijo);
+              if (idx !== -1) this.obstaculos.splice(idx, 1);
+          }
+      });
       }
     }
   }
@@ -324,6 +361,7 @@ class MyScene extends THREE.Scene {
     const aspecto = window.innerWidth / window.innerHeight;
     this.camaraJugador = new THREE.PerspectiveCamera(75, aspecto, 0.01, 1000);
     this.add(this.camaraJugador);
+
     this.camaraArriba = new THREE.OrthographicCamera(
       -10 * aspecto, 10 * aspecto, 10, -10, 0.1, 200
     );
@@ -362,16 +400,24 @@ class MyScene extends THREE.Scene {
     }
   }
 
-  actualizarCamara() {
+actualizarCamara() {
     if (!this.jugador || !this.camaraJugador) return;
-    const alturaOjos = 1;
-    this.camaraJugador.position.set(
-      this.jugador.position.x,
-      this.jugador.position.y + alturaOjos,
-      this.jugador.position.z
-    );
-    this.camaraJugador.rotation.y = this.jugador.angulo;
-  }
+
+    if (this.pointerLocker && this.pointerLocker.isLocked) {
+        this.camaraJugador.position.y = this.jugador.position.y + 1.0;
+        this.jugador.position.x = this.camaraJugador.position.x;
+        this.jugador.position.z = this.camaraJugador.position.z;
+    } else {
+        // Modo normal: cámara sigue al jugador
+        this.camaraJugador.position.set(
+            this.jugador.position.x,
+            this.jugador.position.y + 1.0,
+            this.jugador.position.z
+        );
+        // Restaurar rotación completa, no solo Y
+        this.camaraJugador.rotation.set(0, this.jugador.angulo, 0);
+    }
+}
 
   onWindowResize() {
     const aspect = window.innerWidth / window.innerHeight;
@@ -393,11 +439,13 @@ class MyScene extends THREE.Scene {
       requestAnimationFrame(() => this.update());
       return;
     }
-    if (this.camaraActiva === 'cenital') this.cameraControl.update();
+    if (this.camaraActiva === 'cenital' && (!this.pointerLocker ||  !this.pointerLocker.isLocked)) {
+        this.cameraControl.update();
+    }
     this.renderer.render(this, this.getCamera());
     
     if (this.jugador) {
-      this.jugador.update(this.teclasPulsadas, this.laberinto, this.obstPickups, this.obstaculos);
+      this.jugador.update(this.teclasPulsadas, this.laberinto, this.obstPickups, this.obstaculos,this.pointerLocker);
       this.actualizarCamara();
     }
     if (this.puertaAbierta && this.puerta) this.puerta.update();
