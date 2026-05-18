@@ -142,13 +142,13 @@ class Puerta extends THREE.Object3D {
     materialLoader.load('../../models/knob/Blank.mtl', (materials) => {
       objectLoader.setMaterials(materials);
       objectLoader.load('../../models/knob/Knob.obj', (object) => {
-        object.scale.set(0.008, 0.008, 0.008);
+        object.scale.set(0.020, 0.020, 0.020);
         //rotamos el knob para que quede orientado como una manilla de puerta
         //si pusiesemos pi/2 quedaria del reves,asi que no ponemos eso
         object.rotation.x = Math.PI / 2;
         object.rotation.z = Math.PI;
         //lo situamos acorde a la puerta, para eso lo movemos a la mitad de la altura de la puerta y un poco hacia afuera
-        object.position.set(-0.45, 0.46, 0.14);
+        object.position.set(-0.45, 0.46, 0.17);
 
         this.puertaInterior.add(object);
       });
@@ -217,7 +217,7 @@ class Puerta extends THREE.Object3D {
     this.mallaRosco = new THREE.Mesh(geometriaRosco, materialRosco);
 
     this.mallaRosco.scale.set(0.25, 0.25, 0.25);
-    this.mallaRosco.position.set(-0.275, 0.69, 0.17);
+    this.mallaRosco.position.set(-0.275, 0.83, 0.17);
 
     this.crearBolasNavidad(caminoBarrer);
 
