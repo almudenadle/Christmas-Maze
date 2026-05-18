@@ -23,6 +23,30 @@
 
         update(teclas,laberinto,pickups,muros,pointerLocker){
             const locked = pointerLocker?.isLocked ?? false;
+            const pickupBloqueaPaso = (origen, direccion) => {
+                if (!pickups || pickups.length === 0) return false;
+
+                const siguientePos = origen.clone().add(direccion.clone().multiplyScalar(Player.VELOCIDAD));
+
+                for (const pickup of pickups) {
+                    if (!pickup || !pickup.getWorldPosition) continue;
+
+                    const posPickup = new THREE.Vector3();
+                    pickup.getWorldPosition(posPickup);
+
+                    const radioPickup = 0.35;
+                    const distanciaXZ = Math.hypot(
+                        posPickup.x - siguientePos.x,
+                        posPickup.z - siguientePos.z
+                    );
+
+                    if (distanciaXZ < radioPickup) {
+                        return true;
+                    }
+                }
+
+                return false;
+            };
 
             if(!locked) {
                 if( teclas['a'] || teclas['ArrowLeft']) this.angulo += Player.VEL_GIRO;
@@ -48,8 +72,9 @@
                     if (dir === -1) aQueMiro.negate();
 
                     this.raycaster.set(origen, aQueMiro);
-                    const chocaMuro = this.raycaster.intersectObjects(muros, true).length > 0;
-                    if (!chocaMuro){
+                    const chocaMuro = this.raycaster.intersectObjects(muros || [], true).length > 0;
+                    const chocaPickup = pickupBloqueaPaso(origen, aQueMiro);
+                    if (!chocaMuro && !chocaPickup){
                         pointerLocker.moveForward(Player.VELOCIDAD);    
                     }
                 } else {
@@ -60,12 +85,13 @@
                     ).normalize();
 
                     this.raycaster.set(origen, direccion);
-                    const chocaMuro = this.raycaster.intersectObjects(muros, true).length > 0;
+                    const chocaMuro = this.raycaster.intersectObjects(muros || [], true).length > 0;
+                    const chocaPickup = pickupBloqueaPaso(origen, direccion);
 
                     const posJugador = new THREE.Vector3();
                     this.getWorldPosition(posJugador);
 
-                    if (!chocaMuro) {
+                    if (!chocaMuro && !chocaPickup) {
                         this.position.x += direccion.x * Player.VELOCIDAD;
                         this.position.z += direccion.z * Player.VELOCIDAD;
                     }

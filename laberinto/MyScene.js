@@ -113,7 +113,10 @@ class MyScene extends THREE.Scene {
       const meshesPickup = new Set();
         this.pickups.forEach(p => {
             p.traverse((hijo) => {
-                if (hijo.isMesh) meshesPickup.add(hijo);
+                if (hijo.isMesh) {
+                    meshesPickup.add(hijo);
+                    this.obstPickups.push(hijo);
+                }
             });
       });
 
