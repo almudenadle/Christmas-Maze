@@ -28,6 +28,7 @@ class MyScene extends THREE.Scene {
     
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
+    this.skipNextPointerLock = false;
     
     this.createLights();
     this.lightsEnabled = false; // laberinto starts dark until Chimenea is picked
@@ -207,10 +208,15 @@ class MyScene extends THREE.Scene {
       this.createCamera();
       this.pointerLocker = new PointerLockControls(this.camaraJugador, this.renderer.domElement);
 
+        this.renderer.domElement.addEventListener('pointerdown', (e) => {
+          this.skipNextPointerLock = this.isKnobClick(e);
+        });
+
       this.renderer.domElement.addEventListener('click', () => {
-          if (this.pointerLocker && this.camaraJugador &&!this.pointerLocker.isLocked) {
+          if (this.pointerLocker && this.camaraJugador && !this.pointerLocker.isLocked && !this.skipNextPointerLock) {
               this.pointerLocker.lock();
           }
+          this.skipNextPointerLock = false;
       });
 
 
@@ -348,7 +354,14 @@ class MyScene extends THREE.Scene {
    * ABRIR PUERTA (con llave)
    ********************************/
   abrirPuerta() {
-    if (!this.jugador || !this.laberinto || !this.tengoLlave) return;
+    if (!this.jugador || !this.laberinto) return;
+    // Requerir que se hayan recogido todos los pickups (si los hay)
+    const total = this.pickupStatus ? this.pickupStatus.length : 0;
+    const collected = this.pickupStatus ? this.pickupStatus.filter(i => i.collected).length : 0;
+    if (total > 0 && collected < total) {
+      console.log(' No puedes abrir la puerta: recoge todos los objetos primero.');
+      return;
+    }
     const distanciaApertura = 10.5;
     const posSalida = this.laberinto.getPosFinal();
     const distanciaJugadorSalida = this.jugador.position.distanceTo(posSalida);
@@ -362,6 +375,24 @@ class MyScene extends THREE.Scene {
   /********************************
    * CLICK SOBRE PUERTA
    ********************************/
+  isKnobClick(event) {
+    if (!this.puerta || !this.camaraJugador) return false;
+    this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    this.mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+    this.raycaster.setFromCamera(this.mouse, this.camaraJugador);
+    const intersects = this.raycaster.intersectObjects([this.puerta], true);
+
+    for (const inter of intersects) {
+      let obj = inter.object;
+      while (obj) {
+        if (obj.userData && obj.userData.isKnob) return true;
+        obj = obj.parent;
+      }
+    }
+
+    return false;
+  }
+
   onMouseClick(event) {
     if (!this.jugador || !this.camaraJugador || !this.laberinto) return;
     this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
