@@ -31,6 +31,7 @@ class MyScene extends THREE.Scene {
     this.mouse = new THREE.Vector2();
     
     this.createLights();
+    this.lightsEnabled = false; // laberinto starts dark until Chimenea is picked
 
     window.addEventListener('click', (e) => {
       if (this.pointerLocker?.isLocked) return;
@@ -137,26 +138,29 @@ class MyScene extends THREE.Scene {
           const colores = [0xff0000, 0x00ff00, 0x0000ff];
           // offsets relativos a la campana para situar las luminarias cerca de ella
           const offsets = [
-            new THREE.Vector3(-0.6, 1.2, 0.3),
-            new THREE.Vector3(0.6, 1.2, 0.3),
-            new THREE.Vector3(0, 1.2, -0.6)
+            new THREE.Vector3(-0.6, 0.8, 0.3),
+            new THREE.Vector3(0.6, 0.8, 0.3),
+            new THREE.Vector3(0, 0.8, -0.6)
           ];
 
           this.campanaLights = [];
           for (let i = 0; i < 3; i++) {
             // ancho y alto pequeños para afectar solo la campana
             const rect = new THREE.RectAreaLight(colores[i], 1.0, 0.6, 0.4);
-            rect.power = 60; // ajustable: intensidad moderada
-
+            rect.power = 10; 
             const pos = targetPos.clone().add(offsets[i]);
             rect.position.copy(pos);
             rect.lookAt(targetPos);
 
             this.add(rect);
 
-            // ayuda visual para ver la orientación de cada luminaria
-            const helper = new RectAreaLightHelper(rect);
-            this.add(helper);
+            // helper visual para mostrar el rectángulo de la luz
+            try {
+              const helper = new RectAreaLightHelper(rect);
+              this.add(helper);
+              this.campanaHelpers = this.campanaHelpers || [];
+              this.campanaHelpers.push(helper);
+            } catch (e) { /* helper opcional */ }
 
             this.campanaLights.push(rect);
           }
@@ -164,6 +168,31 @@ class MyScene extends THREE.Scene {
         }
       } catch (err) {
         console.warn('No se pudo crear RectAreaLights para la campana:', err);
+      }
+
+      // --- Crear un SpotLight para destacar la Chimenea (si existe) ---
+      try {
+        const chimeneaPickup = this.pickups.find(p => p instanceof Chimenea);
+        if (chimeneaPickup) {
+          const spotLight = new THREE.SpotLight(0xfcfcfc);
+          spotLight.power = 350; // 350 lúmenes
+          spotLight.angle = Math.PI / 6; // pi/6 a cada lado
+          spotLight.penumbra = 1; // transición suave
+
+          const posCh = new THREE.Vector3();
+          chimeneaPickup.getWorldPosition(posCh);
+          spotLight.position.set(posCh.x, posCh.y + 5, posCh.z); // situada 5m sobre la chimenea
+
+          // Apuntar hacia la chimenea
+          spotLight.target = chimeneaPickup;
+          this.add(spotLight);
+
+          this.chimeneaSpot = spotLight;
+          this.chimeneaSpotDefaultPower = spotLight.power;
+          console.log('SpotLight creada para la chimenea en', posCh);
+        }
+      } catch (err) {
+        console.warn('No se pudo crear SpotLight para la chimenea:', err);
       }
 
       // Cámaras y jugador
@@ -285,6 +314,14 @@ class MyScene extends THREE.Scene {
           }
         }
 
+          // Si recogemos la chimenea, habilitar las luces del laberinto
+          if (pickup instanceof Chimenea) {
+            this.tengoLlave = this.tengoLlave || false; // no afecta pero mantiene semántica
+            this.lightsEnabled = true;
+            this.enableLights();
+            console.log('🔥 Chimenea recogida: iluminando el laberinto');
+          }
+
         // Eliminar físicamente el objeto
         this.laberinto.remove(pickup);
         this.pickups.splice(i, 1);
@@ -373,7 +410,8 @@ class MyScene extends THREE.Scene {
     this.guiControls = {
       lightPower : 500.0,
       ambientIntensity : 0.5,
-      axisOnOff : true
+      axisOnOff : true,
+      chimeneaSpotOn: true
     }
     var folder = gui.addFolder('Luz y Ejes');
     folder.add(this.guiControls, 'lightPower', 0, 1000, 20)
@@ -385,24 +423,44 @@ class MyScene extends THREE.Scene {
     folder.add(this.guiControls, 'axisOnOff')
       .name('Mostrar ejes : ')
       .onChange( (value) => this.setAxisVisible(value) );
+    folder.add(this.guiControls, 'chimeneaSpotOn')
+      .name('Spot chimenea')
+      .onChange( (value) => this.setChimeneaSpot(value) );
     return gui;
   }
 
   //luces
   createLights() {
     RectAreaLightUniformsLib.init();
-
-    this.ambientLight = new THREE.AmbientLight('white', this.guiControls.ambientIntensity);
+    
+    // Start with lights off; will be enabled when Chimenea is picked
+    this.ambientLight = new THREE.AmbientLight('white', 0);
     this.add(this.ambientLight);
     this.pointLight = new THREE.SpotLight(0xffffff);
-    this.pointLight.power = this.guiControls.lightPower;
+    this.pointLight.power = 0;
     this.pointLight.position.set(2, 9, 1);
     this.add(this.pointLight);
   }
 
-  setLightPower(valor) { this.pointLight.power = valor; }
-  setAmbientIntensity(valor) { this.ambientLight.intensity = valor; }
+  enableLights() {
+    if (!this.ambientLight || !this.pointLight) return;
+    this.ambientLight.intensity = this.guiControls.ambientIntensity;
+    this.pointLight.power = this.guiControls.lightPower;
+   
+  }
+
+  setLightPower(valor) { this.guiControls.lightPower = valor; if (this.lightsEnabled && this.pointLight) this.pointLight.power = valor; }
+  setAmbientIntensity(valor) { this.guiControls.ambientIntensity = valor; if (this.lightsEnabled && this.ambientLight) this.ambientLight.intensity = valor; }
   setAxisVisible(valor) { this.axis.visible = valor; }
+
+  setChimeneaSpot(enabled) {
+    this.guiControls.chimeneaSpotOn = enabled;
+    if (!this.chimeneaSpot) return;
+    try {
+      const defaultPower = this.chimeneaSpotDefaultPower || 350;
+      this.chimeneaSpot.power = enabled ? defaultPower : 0;
+    } catch (e) {}
+  }
 
 //Renderer
   createRenderer(myCanvas) {
