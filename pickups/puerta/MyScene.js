@@ -151,6 +151,7 @@ class MyScene extends THREE.Scene {
     this.pointLight.position.set( 2, 3, 1 );
     console.log (this.pointLight);
     this.add (this.pointLight);
+
   }
   
   setLightPower (valor) {

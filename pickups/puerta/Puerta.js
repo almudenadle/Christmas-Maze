@@ -60,8 +60,21 @@ class Puerta extends THREE.Object3D {
 
     const loader = new THREE.TextureLoader();
 
-    //hacemos la puerta roja en vez de usar imagen 
-    const materialPuerta = new THREE.MeshStandardMaterial({color: 0x870821});
+    // Mapa de relieve para que la puerta exterior no se vea plana
+    //uso tambien las hojas pq como la puerta es de color rojo nada mas pues con cualquier textura nos vale y asi no necesitamos cargar mas
+    const texturaRelievePuertaExterior = loader.load('../../imgs/hojas_bump.jpg');
+    texturaRelievePuertaExterior.wrapS = THREE.RepeatWrapping;
+    texturaRelievePuertaExterior.wrapT = THREE.RepeatWrapping;
+    texturaRelievePuertaExterior.repeat.set(2, 4);
+
+    const materialPuerta = new THREE.MeshStandardMaterial({
+      color: 0x870821,
+      bumpMap: texturaRelievePuertaExterior,
+      bumpScale: 2,
+      roughness: 0.7,
+      metalness: 0.05
+    });
+    
     this.marcoPuerta = new THREE.Mesh(geometriaMarcoPuerta, materialPuerta);
 
 
@@ -106,6 +119,7 @@ class Puerta extends THREE.Object3D {
     texturaPuertaInterior.wrapS = THREE.RepeatWrapping;
     texturaPuertaInterior.wrapT = THREE.RepeatWrapping;
     texturaPuertaInterior.repeat.set(1, 1);
+
     const materialPuertaInterior = new THREE.MeshStandardMaterial({ map: texturaPuertaInterior });
 
 
@@ -214,13 +228,31 @@ class Puerta extends THREE.Object3D {
     const geometriaRosco = new THREE.ExtrudeGeometry(formaRosco, opcionesBarrido);
 
 
-    this.texturaRosco = new THREE.TextureLoader().load('../../imgs/hojas.jpg');
+    // this.texturaRosco = new THREE.TextureLoader().load('../../imgs/hojas.jpg');
 
-    this.texturaRosco.wrapT = THREE.RepeatWrapping;
-    this.texturaRosco.wrapS = THREE.RepeatWrapping;
-    this.texturaRosco.repeat.set(8, 10);
+    // this.texturaRosco.wrapT = THREE.RepeatWrapping;
+    // this.texturaRosco.wrapS = THREE.RepeatWrapping;
+    // this.texturaRosco.repeat.set(8, 10);
+    // 1. Cargamos la textura de color 
+this.texturaRosco = new THREE.TextureLoader().load('../../imgs/hojas.jpg');
+this.texturaRosco.wrapT = THREE.RepeatWrapping;
+this.texturaRosco.wrapS = THREE.RepeatWrapping;
+this.texturaRosco.repeat.set(8, 10);
 
-    const materialRosco = new THREE.MeshStandardMaterial({ map: this.texturaRosco });
+// 2. Cargamos la textura de relieve 
+this.texturaRelieveRosco = new THREE.TextureLoader().load('../../imgs/hojas_bump.jpg'); 
+this.texturaRelieveRosco.wrapT = THREE.RepeatWrapping;
+this.texturaRelieveRosco.wrapS = THREE.RepeatWrapping;
+this.texturaRelieveRosco.repeat.set(8, 10); 
+
+// 3. Creamos el material combinando ambos canales
+const materialRosco = new THREE.MeshStandardMaterial({ 
+  map: this.texturaRosco,               
+  bumpMap: this.texturaRelieveRosco,    
+  bumpScale: 4                     
+});
+
+ //   const materialRosco = new THREE.MeshStandardMaterial({ map: this.texturaRosco });
 
     this.mallaRosco = new THREE.Mesh(geometriaRosco, materialRosco);
 
