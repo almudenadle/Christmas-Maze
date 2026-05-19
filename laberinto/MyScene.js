@@ -318,6 +318,9 @@ class MyScene extends THREE.Scene {
         } else if (pickup instanceof Campana) {
           tipoEncontrado = '🔔 Campana';
           console.log('¡Has recogido la campana!');
+          // Reproducir sonido de campana
+          const campanaSound = new Audio('../sounds/campana.mp3');
+          campanaSound.play().catch(err => console.warn('Error al reproducir sonido:', err));
         } else if (pickup instanceof Reno) {
           tipoEncontrado = '🦌 Reno';
           console.log('¡Has recogido al reno!');
