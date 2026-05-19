@@ -23,9 +23,9 @@ class Puerta extends THREE.Object3D {
 
 
   createPuerta() {
-    const lado = 0.22; // Grosor de la puerta
+    const lado = 0.14; // Grosor de la puerta
     const altoRecto = 0.8; // Altura de los tramos verticales
-    const radioArco = 0.37; // Radio del arco superior
+    const radioArco = 0.35; // Radio del arco superior
     const puntos = []; //Recorrido del marco de la puerta
     const puntosPuerta = []; //Recorrido de la puerta interior 
 
@@ -62,7 +62,7 @@ class Puerta extends THREE.Object3D {
 
     // Mapa de relieve para que la puerta exterior no se vea plana
     //uso tambien las hojas pq como la puerta es de color rojo nada mas pues con cualquier textura nos vale y asi no necesitamos cargar mas
-    const texturaRelievePuertaExterior = loader.load('../../imgs/hojas_bump.jpg');
+    const texturaRelievePuertaExterior = loader.load('../../imgs/patron.jpg');
     texturaRelievePuertaExterior.wrapS = THREE.RepeatWrapping;
     texturaRelievePuertaExterior.wrapT = THREE.RepeatWrapping;
     texturaRelievePuertaExterior.repeat.set(2, 4);
@@ -70,7 +70,7 @@ class Puerta extends THREE.Object3D {
     const materialPuerta = new THREE.MeshStandardMaterial({
       color: 0x870821,
       bumpMap: texturaRelievePuertaExterior,
-      bumpScale: 2,
+      bumpScale: 12,
       roughness: 0.7,
       metalness: 0.05
     });
@@ -129,8 +129,8 @@ class Puerta extends THREE.Object3D {
     this.puertaInterior.position.x = radioArcoInterior;
 
     //movemos la puerta un poco hacia el lado
-    this.marcoPuerta.position.x -= 0.25;
-    this.puertaInterior.position.x -= 0.25;
+    this.marcoPuerta.position.x -= 0.15;
+    this.puertaInterior.position.x -= 0.15;
 
     this.createRosco();
     this.add(this.marcoPuerta);
