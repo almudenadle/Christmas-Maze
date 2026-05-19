@@ -30,6 +30,7 @@ class Laberinto extends THREE.Object3D {
     this.posFinal = new THREE.Vector3();
     this.posLlave = this.posR = new THREE.Vector3();
     this.posicionesPickUp = [];
+    this.renosPatrulla = []
 
     // La geometría compartida de un bloque
     const bloqueGeo = new THREE.BoxGeometry (this.anchoBloque, this.altoBloque, this.anchoBloque);
@@ -141,12 +142,11 @@ class Laberinto extends THREE.Object3D {
               console.log('Reno encontrado en fila:', fila, 'columna:', columna);
               this.reno = new Reno();
               this.reno.position.set(columna*this.anchoBloque,0, fila*this.anchoBloque);
+              this.reno._filaAct = this.reno._filaObj = fila;
+              this.reno._colAct = this.reno._colObj = columna;
+              
               this.add(this.reno);
-
-              // Treat reno also as a pickup so MyScene can list and collect it
               this.posicionesPickUp.push(this.reno);
-
-              this.renosPatrulla = this.renosPatrulla || [];
               this.renosPatrulla.push(this.reno);
               break;
           } 
@@ -186,15 +186,20 @@ class Laberinto extends THREE.Object3D {
     if(f == null && c == null){
       console.log('Todo mal');
       return;
-    }
-    if(f < 0 || f > this.zNumBloques){
+    }else if(f < 0 || f >= this.zNumBloques){
       console.log('Todo mal 2');
       return;
-    }
-    if(c < 0 || c > this.xNumBloques){
+    }else if(c < 0 || c >= this.xNumBloques){
       console.log('Todo mal 3');
       return;
-    }
+    }else if( f == this.fR && c == this.cR){
+      return;
+    }else if( f == this.filaB && c == this.columnaB){
+      return;
+    }else if( f == this.fC && c == this.cC){
+      return;
+    }else if( f == this.filaC && c == this.columnaC) return;
+    
     const celda = this.laberintoMatriz[f][c];
     return celda !== 'X' && celda !== 'E';
   }
@@ -204,54 +209,61 @@ class Laberinto extends THREE.Object3D {
   getPosInicial(){ return this.posIncio; }
   getPosFinal(){ return this.posFinal; }
 
-  update () {
-    if(this.reno) this.reno.update();
-    
+  update () {    
     for(const reno of this.renosPatrulla){
-      this.reno.update();
+      reno.update();
+      this._actualizarPosicionReno(reno);
     }
   }
 
-  /*
+  
   _actualizarPosicionReno(reno){
-    const patrulla = reno._patrulla;
+    if(!this.laberintoMatriz) return;
 
-    const objetivoX = patrulla.colObjetivo * this.anchoBloque;
-    const objetivoZ = patrulla.filaObjetivo * this.anchoBloque;
+    const objetivoX = reno._colObj * this.anchoBloque;
+    const objetivoZ = reno._filaObj * this.anchoBloque;
 
-    const dx = objetivoX - reno.position.x;
-    const dz = objetivoZ - reno.position.z;
-    const distancia = Math.sqrt(dx*dx + dz*dz);
+    const dX = objetivoX - reno.position.x;
+    const dZ = objetivoZ - reno.position.z;
+    const distancia = Math.sqrt(dX * dX + dZ * dZ);
 
-    if (distancia < 0.05) {
-      reno.filaAct = patrulla.filaObjetivo;
-      reno.colAct = patrulla.colObjetivo;
-      this._elegirNuevoObjetivo(patrulla);
+    if(distancia < 0.05){
+       reno.position.set(objetivoX, 0, objetivoZ);
+        reno._filaAct = reno._filaObj;
+        reno._colAct  = reno._colObj;
+        this._elegirNuevoObjetivo(reno);
     } else {
-      const pasoX = (dx / distancia) * patrulla.velocidad;
-      const pasoZ = (dz / distancia) * patrulla.velocidad;
-      reno.position.x += pasoX;
-      reno.position.z += pasoZ;
-
-      reno.rotation.y = Math.atan2(pasoX, pasoZ);
+        const velocidad = 0.02;
+        reno.position.x += (dX / distancia) * velocidad;
+        reno.position.z += (dZ / distancia) * velocidad;
+        reno.renoGroup.rotation.y = Math.atan2(dX, dZ);
     }
   }
 
-  _elegirNuevoObjetivo(patrulla){
+  _elegirNuevoObjetivo(reno){
     const direcciones = [
-      { fila: patrulla.filaAct - 1, col: patrulla.colAct}, // Arriba
-      { fila: patrulla.filaAct + 1, col: patrulla.colAct}, // Abajo
-      { fila: patrulla.filaAct, col: patrulla.colAct - 1}, // Izquierda
-      { fila: patrulla.filaAct, col: patrulla.colAct + 1}  // Derecha
+        { fila: reno._filaAct - 1, col: reno._colAct },
+        { fila: reno._filaAct + 1, col: reno._colAct },
+        { fila: reno._filaAct,     col: reno._colAct - 1 },
+        { fila: reno._filaAct,     col: reno._colAct + 1 }
     ];
-    
+
     const transitables = direcciones.filter(d => this.esCeldaTransitable(d.fila, d.col));
-    console.log('Opciones transitables para el reno en fila:', patrulla.filaAct, 'columna:', patrulla.colAct, '->', transitables);
-    const elegido = transitables[Math.floor(Math.random() * transitables.length)];
-    patrulla.filaAnterior = elegido.fila;
-    patrulla.colAnterior = elegido.col;
+    if (transitables.length === 0) return;
+
+    // Evitar volver a la celda anterior si hay otras opciones
+    const sinRetroceso = transitables.filter(
+        d => !(d.fila === reno._filaAnterior && d.col === reno._colAnterior)
+    );
+    const opciones = sinRetroceso.length > 0 ? sinRetroceso : transitables;
+
+    const elegido = opciones[Math.floor(Math.random() * opciones.length)];
+    reno._filaAnterior = reno._filaAct;
+    reno._colAnterior  = reno._colAct;
+    reno._filaObj = elegido.fila;
+    reno._colObj  = elegido.col;
   }
-  */
+  
 }
 
 export { Laberinto }

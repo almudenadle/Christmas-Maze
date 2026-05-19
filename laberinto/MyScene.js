@@ -26,6 +26,8 @@ class MyScene extends THREE.Scene {
     // Se crea la interfaz gráfica de usuario
     this.gui = this.createGUI();
     
+    this.modoRaton = false;
+
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
     this.skipNextPointerLock = false;
@@ -34,14 +36,44 @@ class MyScene extends THREE.Scene {
     this.lightsEnabled = false; // laberinto starts dark until Chimenea is picked
 
     window.addEventListener('click', (e) => {
-      if (this.pointerLocker?.isLocked) return;
+      if (this.pointerLocker?.isLocked){
+        this.mouse.x = 0;
+        this.mouse.y = 0;
+
+        if(this.laberinto && this.pickups?.length > 0){
+          const pickupMeshes = [];
+          this.pickups.forEach(p => { 
+            p.traverse(h => {
+              if (h.isMesh) pickupMeshes.push(h);
+            });
+          });  
+
+          const intersects = this.raycaster.intersectObjects(pickupMeshes, false);
+          if (intersects.length > 0){
+            this.recogerPickup();
+          }
+        }
+
+        return;
+      }
       this.onMouseClick(e);
       if (this.laberinto) {
           this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
           this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
           this.raycaster.setFromCamera(this.mouse, this.getCamera());
-          const intersects = this.raycaster.intersectObjects(this.laberinto.children, true);
-          if (intersects.length > 0) this.recogerPickup();
+          
+          const pickupMeshes = [];
+          this.pickups.forEach(p => { 
+            p.traverse(h => {
+              if (h.isMesh) pickupMeshes.push(h);
+            });
+          });  
+
+          const intersects = this.raycaster.intersectObjects(pickupMeshes, false);
+          if (intersects.length > 0){
+            this.skipNextPointerLock = true;
+            this.recogerPickup();
+          }
       }
     });
 
@@ -67,6 +99,11 @@ class MyScene extends THREE.Scene {
       }
     });
 
+    window.addEventListener('keydown',(e) => {
+      if( e.key === 't' || e.key === 'T'){
+        this.toggleModoRaton();
+      }
+    })
     this.teclasPulsadas = {};
     window.addEventListener('keydown', e => this.teclasPulsadas[e.key] = true);
     window.addEventListener('keyup', e => this.teclasPulsadas[e.key] = false);
@@ -211,20 +248,23 @@ class MyScene extends THREE.Scene {
       this.createCamera();
       this.pointerLocker = new PointerLockControls(this.camaraJugador, this.renderer.domElement);
 
-        this.renderer.domElement.addEventListener('pointerdown', (e) => {
-          this.skipNextPointerLock = this.isKnobClick(e);
-        });
+      this.renderer.domElement.addEventListener('pointerdown', (e) => {
+        this.skipNextPointerLock = this.isKnobClick(e);
+      });
 
       this.renderer.domElement.addEventListener('click', () => {
-          if (this.pointerLocker && this.camaraJugador && !this.pointerLocker.isLocked && !this.skipNextPointerLock) {
+          if (this.skipNextPointerLock) {
+            this.skipNextPointerLock = false; 
+            return;
+          }
+          if (this.modoRaton && this.camaraActiva === 'jugador' && this.pointerLocker && this.camaraJugador && !this.pointerLocker.isLocked) {
               this.pointerLocker.lock();
           }
-          this.skipNextPointerLock = false;
       });
 
 
       window.addEventListener('keyup', (e) => {
-        if(e.key === 'Escape' && this.pointerLocker) {
+        if(e.key === 'Escape' && this.pointerLocker?.isLocked) {
           this.pointerLocker.unlock();
         }
       }); 
@@ -292,9 +332,11 @@ class MyScene extends THREE.Scene {
 
   recogerPickup() {
     if (!this.jugador || !this.pickups) return;
-    const distanciaRecogida = 3.0;
+    const distanciaRecogida = 1.0;
+    let recogidoAlgo = false;
 
     for (let i = this.pickups.length - 1; i >= 0; i--) {
+      if (recogidoAlgo) break; 
       const pickup = this.pickups[i];
       if (!pickup || !pickup.position) continue;
 
@@ -344,6 +386,10 @@ class MyScene extends THREE.Scene {
 
         // Eliminar físicamente el objeto
         this.laberinto.remove(pickup);
+        if (pickup instanceof Reno) {
+            const idx = this.laberinto.renosPatrulla.indexOf(pickup);
+            if (idx !== -1) this.laberinto.renosPatrulla.splice(idx, 1);
+        }
         this.pickups.splice(i, 1);
 
         pickup.traverse((hijo) => {
@@ -352,6 +398,7 @@ class MyScene extends THREE.Scene {
               if (idx !== -1) this.obstaculos.splice(idx, 1);
           }
       });
+      recogidoAlgo = true;
       }
     }
   }
@@ -532,6 +579,7 @@ class MyScene extends THREE.Scene {
     this.cameraControl.rotateSpeed = 5;
     this.cameraControl.zoomSpeed = -2;
     this.cameraControl.panSpeed = 0.5;
+    this.cameraControl.enabled = false;
     this.camaraActiva = 'jugador';
   }
 
@@ -540,7 +588,28 @@ class MyScene extends THREE.Scene {
     const idx = orden.indexOf(this.camaraActiva);
     this.camaraActiva = orden[(idx + 1) % orden.length];
     this.cameraControl.object = this.camaraArriba;
+    if(this.camaraActiva === 'cenital') {
+      if (this.pointerLocker?.isLocked) this.pointerLocker.unlock();
+      this.cameraControl.enabled = true;
+    } else{
+      this.cameraControl.enabled = false;
+      this.camaraJugador.rotation.set(0, this.jugador.angulo, 0);
+      if(this.modoRaton && this.pointerLocker && !this.pointerLocker.isLocked) this.pointerLocker.lock();
+    }
+    
     console.log('Cámara activa:', this.camaraActiva);
+  }
+
+  toggleModoRaton(){
+    this.modoRaton = !this.modoRaton;
+
+    if(this.modoRaton){
+      if(this.pointerLocker && !this.pointerLocker.isLocked) this.pointerLocker.lock();
+    }else{
+      if(this.pointerLocker?.isLocked) this.pointerLocker.unlock();
+    }
+
+    console.log('Modo Ratón', this.modoRaton);
   }
 
   getCamera() {
@@ -563,10 +632,11 @@ class MyScene extends THREE.Scene {
 actualizarCamara() {
     if (!this.jugador || !this.camaraJugador) return;
 
-    if (this.pointerLocker && this.pointerLocker.isLocked) {
+    if (this.modoRaton && this.pointerLocker && this.pointerLocker.isLocked) {
         this.camaraJugador.position.y = this.jugador.position.y + 1.0;
         this.jugador.position.x = this.camaraJugador.position.x;
         this.jugador.position.z = this.camaraJugador.position.z;
+        
     } else {
         // Modo normal: cámara sigue al jugador
         this.camaraJugador.position.set(
@@ -575,7 +645,7 @@ actualizarCamara() {
             this.jugador.position.z
         );
         // Restaurar rotación completa, no solo Y
-        this.camaraJugador.rotation.set(0, this.jugador.angulo, 0);
+        this.camaraJugador.rotation.set(0, this.jugador.angulo, 0,'YXZ');
     }
 }
 
@@ -599,7 +669,8 @@ actualizarCamara() {
       requestAnimationFrame(() => this.update());
       return;
     }
-    if (this.camaraActiva === 'cenital' && (!this.pointerLocker ||  !this.pointerLocker.isLocked)) {
+    if (this.camaraActiva === 'cenital' && this.cameraControl?.enabled &&
+        (!this.pointerLocker || !this.pointerLocker.isLocked)) {
         this.cameraControl.update();
     }
     this.renderer.render(this, this.getCamera());
