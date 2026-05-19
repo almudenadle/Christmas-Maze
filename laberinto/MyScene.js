@@ -332,7 +332,7 @@ class MyScene extends THREE.Scene {
 
   recogerPickup() {
     if (!this.jugador || !this.pickups) return;
-    const distanciaRecogida = 1.0;
+    const distanciaRecogida = 1.6;
     let recogidoAlgo = false;
 
     for (let i = this.pickups.length - 1; i >= 0; i--) {
