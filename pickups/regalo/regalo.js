@@ -39,6 +39,10 @@ class Regalo extends THREE.Object3D{
  
         var lazo = this.createLazo(tamano);
         this.articulacionLazo.add(lazo);
+
+        this._abierto = false;
+        this._animando = false;
+        this._progreso = 0;
     }  
     /**
      * Se encarga de unir todos los componentes con los que conseguir crear el regalo
@@ -229,7 +233,26 @@ class Regalo extends THREE.Object3D{
     }
 
     update(){
+        if(!this._animando) return;
+        this._progreso += 0.2;
 
+        if(this._progreso >= 1){
+            this._progreso = 1;
+            this._animando = false;
+            this._abierto = true;
+            if (this._onCompleto)  this._onCompleto();
+        }
+
+        this.articulacionTapa.rotation.x = (-this._progreso * Math.PI / 2);
+        if( this._luzRegalo) {
+            this._luzRegalo.intensity = 0.5 + Math.sin(this._progreso * Math.PI * 6) * 0.5;
+        }
+    }
+
+    abrirAnimado(onCompleto){
+        if( this._abierto || this._animando ) return;
+        this._animando = true;
+        this._onCompleto = onCompleto || null;
     }
 
 }

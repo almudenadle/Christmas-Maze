@@ -311,6 +311,28 @@ class MyScene extends THREE.Scene {
     this.uiDiv.style.pointerEvents = 'none'; // para no bloquear clics
     this.uiDiv.style.minWidth = '180px';
     document.body.appendChild(this.uiDiv);
+
+    // Crear crosshair
+    this.crosshair = document.createElement('div');
+    this.crosshair.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 16px;
+        height: 16px;
+        pointer-events: none;
+        display: none;
+        z-index: 200;
+    `;
+    this.crosshair.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 16 16">
+            <line x1="8" y1="0" x2="8" y2="16" stroke="white" stroke-width="1.5" opacity="0.8"/>
+            <line x1="0" y1="8" x2="16" y2="8" stroke="white" stroke-width="1.5" opacity="0.8"/>
+            <circle cx="8" cy="8" r="1.5" fill="white" opacity="0.8"/>
+        </svg>
+    `;
+    document.body.appendChild(this.crosshair);
   }
 
   updatePickupUI() {
@@ -352,6 +374,11 @@ class MyScene extends THREE.Scene {
           tipoEncontrado = '🔑 Llave';
           console.log(' ¡Has recogido la llave!');
         } else if (pickup instanceof Regalo) {
+          if(!pickup._abierto){
+            this._abrirRegalo(pickup);
+            recogidoAlgo = true;
+            break
+          }
           tipoEncontrado = '🎁 Regalo';
           console.log(' ¡Has recogido un regalo!');
         } else if (pickup instanceof Chimenea) {
@@ -423,6 +450,50 @@ class MyScene extends THREE.Scene {
       this.puertaAbierta = true;
       console.log('🚪 Puerta abierta!');
     }
+  }
+
+    /********************************
+   * ABRIR REGALO
+   ********************************/
+  _abrirRegalo(regalo) {
+    const luzRegalo = new THREE.PointLight(0xffd700, 0, 3);
+    const posRegalo = new THREE.Vector3();
+    regalo.getWorldPosition(posRegalo);
+    luzRegalo.position.copy(posRegalo);
+    luzRegalo.position.y += 0.15;
+    this.add(luzRegalo);
+    regalo._luzRegalo = luzRegalo;
+
+    regalo.abrirAnimado(() => {
+        const llave = new coponieve();
+        llave.scale.set(3, 3, 3);
+
+        const pos = new THREE.Vector3();
+        regalo.getWorldPosition(pos);
+
+        llave.position.set(
+            pos.x - this.laberinto.position.x,
+            0.05,
+            pos.z - this.laberinto.position.z
+        );
+
+        const luzHielo = new THREE.PointLight(0xaaddff,3,3);
+        luzHielo.position.set(0,0.3,0);
+        llave.add(luzHielo);
+
+        this.laberinto.add(llave);
+        this.pickups.push(llave);
+
+        // Animación de subida
+        llave._subiendo = true;
+        llave._alturaFinal = 0.35;
+        llave._velocidadSubida = 0.008;
+
+        this.pickupStatus.push({ nombre: '🔑 Llave (regalo)', collected: false, objeto: llave });
+        this.updatePickupUI();
+        luzRegalo.intensity = 0.3;
+        console.log('🎁 Regalo abierto: la llave emerge');
+    });
   }
 
   /********************************
@@ -589,9 +660,11 @@ class MyScene extends THREE.Scene {
     this.camaraActiva = orden[(idx + 1) % orden.length];
     this.cameraControl.object = this.camaraArriba;
     if(this.camaraActiva === 'cenital') {
+      this.crosshair.style.display = 'none'
       if (this.pointerLocker?.isLocked) this.pointerLocker.unlock();
       this.cameraControl.enabled = true;
     } else{
+      this.crosshair.style.display = this.modoRaton ? 'block' : 'none';
       this.cameraControl.enabled = false;
       this.camaraJugador.rotation.set(0, this.jugador.angulo, 0);
       if(this.modoRaton && this.pointerLocker && !this.pointerLocker.isLocked) this.pointerLocker.lock();
@@ -602,6 +675,7 @@ class MyScene extends THREE.Scene {
 
   toggleModoRaton(){
     this.modoRaton = !this.modoRaton;
+    this.crosshair.style.display = this.modoRaton ? 'block' : 'none';
 
     if(this.modoRaton){
       if(this.pointerLocker && !this.pointerLocker.isLocked) this.pointerLocker.lock();
@@ -681,6 +755,19 @@ actualizarCamara() {
     }
     if (this.puertaAbierta && this.puerta) this.puerta.update();
     if (this.laberinto) this.laberinto.update();
+
+    if (this.pickups) {
+      this.pickups.forEach(p => {
+          if (p instanceof Regalo) p.update();
+          if (p instanceof coponieve && p._subiendo) {
+              p.position.y += p._velocidadSubida;
+              if (p.position.y >= p._alturaFinal) {
+                  p.position.y = p._alturaFinal;
+                  p._subiendo = false;
+              }
+          }
+      });
+    }
 
     // Animación de la nieve
     if (this.nieve) {
