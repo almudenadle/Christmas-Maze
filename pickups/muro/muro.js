@@ -1,6 +1,12 @@
 import * as THREE from 'three';
 
 class Muro extends THREE.Object3D {
+    static _loader = new THREE.TextureLoader();
+    static _bumpTronco = Muro._loader.load('../../imgs/Bark014_1K-JPG_Displacement.jpg');
+    static _colorTronco = Muro._loader.load("../../imgs/Bark014_1K-JPG_Color.jpg");
+    static _rugosidadTronco = Muro._loader.load("../../imgs/Bark014_1K-JPG_Roughness.jpg");
+    
+
     constructor(ancho = 1, alto = 2, profundidad = 1,esVertical = false, esHorizontal = false) {
         super();
 
@@ -27,15 +33,13 @@ class Muro extends THREE.Object3D {
         const materialTronco = new THREE.MeshStandardMaterial({
             color: 0x6B3C1E,
             roughness: 0.9,
-            metalness: 0.0
+            metalness: 0.0,
+            map : Muro._colorTronco,
+            bumpMap : Muro._bumpTronco,
+            bumpScale : 1.5,
+            roughnessMap : Muro._rugosidadTronco
         });
         
-        const materialCorte = new THREE.MeshStandardMaterial({
-            color: 0x9A5830,
-            roughness: 0.85,
-            metalness: 0.0 
-        });
-
         const altura = this._alto;
         const radio = altura * 0.14;
         const longitud = this._profundidad;
@@ -52,8 +56,8 @@ class Muro extends THREE.Object3D {
             tronco.position.set(0,y,0);
             this.add(tronco);
 
-            const cortIzq = new THREE.Mesh(geometriaCorte,materialCorte);
-            const cortDch = new THREE.Mesh(geometriaCorte,materialCorte);
+            const cortIzq = new THREE.Mesh(geometriaCorte,materialTronco);
+            const cortDch = new THREE.Mesh(geometriaCorte,materialTronco);
             
 
             if( this._vertical ){
@@ -116,11 +120,17 @@ class Muro extends THREE.Object3D {
             color: 0x5C3317,
             roughness: 0.9,
             metalness: 0.0,
+            map : Muro._colorTronco,
+            bumpMap : Muro._bumpTronco,
+            bumpScale : 1.5,
+            roughnessMap : Muro._rugosidadTronco
         });
         const materialCorte = new THREE.MeshStandardMaterial({
             color: 0x9A5830,
             roughness: 0.85,
             metalness: 0.0,
+            bumpMap : Muro._bumpTronco,
+            bumpScale : 0.8
         });
 
         const radio = this._ancho * 0.45;

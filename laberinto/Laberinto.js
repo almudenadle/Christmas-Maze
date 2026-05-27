@@ -46,7 +46,6 @@ class Laberinto extends THREE.Object3D {
       const laberintoMatriz = file.split (/\r?\n/);
       console.log("Mapa cargado:", laberintoMatriz);
       console.log("Filas:", laberintoMatriz.length, "Columnas:", laberintoMatriz[0].length);
-      //laberintoMatriz.pop(); // La última fila está vacía
       this.xNumBloques = laberintoMatriz[0].length;
       this.zNumBloques = laberintoMatriz.length;
       var unBloque;
@@ -54,7 +53,6 @@ class Laberinto extends THREE.Object3D {
       for (let fila = 0; fila < this.zNumBloques; fila++) {
         for (let columna = 0; columna < this.xNumBloques; columna++) {
           const celda = laberintoMatriz[fila][columna];
-          //if (celda === 'L') console.log("L encontrada en fila:", fila, "columna:", columna);
           switch (laberintoMatriz[fila][columna]) {
             case Laberinto.WALL :
               
@@ -169,8 +167,6 @@ class Laberinto extends THREE.Object3D {
   }
     
   getMundoFromCelda (fila, columna, salida) {
-    // Se asume que los datos de entrada son correctos
-    // Salida es un Vector3, igual que el atributo  position  de un Mesh
     salida.x = columna * this.anchoBloque + this.position.x;
     salida.z = fila * this.anchoBloque + this.position.z;
   }
@@ -178,19 +174,15 @@ class Laberinto extends THREE.Object3D {
   getCeldaFromMundo(x,z){
     const columna = Math.round((x-this.position.x) / this.anchoBloque);
     const fila = Math.round((z-this.position.z) / this.anchoBloque);
-    //console.log('Posiciones de la celda',fila, columna);
     return {fila,columna}
   }
 
   esCeldaTransitable(f,c){
     if(f == null && c == null){
-      console.log('Todo mal');
       return;
     }else if(f < 0 || f >= this.zNumBloques){
-      console.log('Todo mal 2');
       return;
     }else if(c < 0 || c >= this.xNumBloques){
-      console.log('Todo mal 3');
       return;
     }else if( f == this.fR && c == this.cR){
       return;

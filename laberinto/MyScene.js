@@ -283,9 +283,24 @@ class MyScene extends THREE.Scene {
 
       // Suelo y ambiente
       this.createNieve(500, anchoTotal, largoTotal);
+
+      const loader = new THREE.TextureLoader();
+      const textSuelo = loader.load("../../imgs/Snow014_1K-JPG_Color.jpg");
+      textSuelo.wrapS = textSuelo.wrapT = THREE.RepeatWrapping;
+      textSuelo.repeat.set(
+        Math.ceil(anchoTotal),
+        Math.ceil(largoTotal)
+      );
+
+
       const geometriaSuelo = new THREE.BoxGeometry(anchoTotal, 0.02, largoTotal);
-      const materialSuelo = new THREE.MeshStandardMaterial({ color: 0xFFFAFA });
+      const materialSuelo = new THREE.MeshStandardMaterial({ 
+        map : textSuelo,
+        bumpMap : loader.load("../../imgs/Snow014_1K-JPG_Displacement.jpg"),
+        bumpScale : 1
+      });
       const suelo = new THREE.Mesh(geometriaSuelo, materialSuelo);
+      
       suelo.position.x = this.laberinto.position.x + anchoTotal/2 - this.laberinto.anchoBloque/2;
       suelo.position.z = this.laberinto.position.z + largoTotal/2 - this.laberinto.anchoBloque/2;
       suelo.position.y = -0.01;
