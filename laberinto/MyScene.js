@@ -403,6 +403,8 @@ class MyScene extends THREE.Scene {
         } else if (pickup instanceof Reno) {
           tipoEncontrado = '🦌 Reno';
           console.log('¡Has recogido al reno!');
+          const renoSound = new Audio('../sounds/reno.mp3');
+          renoSound.play().catch(err => console.warn('Error al reproducir sonido:', err));
         } else if (pickup instanceof BastonCaramelo) {
           tipoEncontrado = '🍬 Baston Caramelo';
           console.log("¡Has recogido el Bastón de Caramelo");
