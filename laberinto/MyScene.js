@@ -15,6 +15,7 @@ import { Campana } from '../pickups/campana/campana.js'
 import { Reno } from '../pickups/reno/reno.js'
 import { Player } from '../player/player.js'
 import { Puerta } from '../pickups/puerta/Puerta.js'
+import { BastonCaramelo } from '../pickups/bastonCaramelo/bastonCaramelo.js'
 
 class MyScene extends THREE.Scene {
   constructor (myCanvas) { 
@@ -129,6 +130,13 @@ class MyScene extends THREE.Scene {
       const anchoTotal = this.laberinto.xNumBloques * this.laberinto.anchoBloque;
       const largoTotal = this.laberinto.zNumBloques * this.laberinto.anchoBloque;
 
+      // Puerta de salida
+      this.puerta = new Puerta();
+      this.puerta.position.copy(posFinal);
+      this.add(this.puerta);
+      this.laberinto.posicionesPickUp.push(this.puerta);
+      this.puertaAbierta = false;
+
       this.pickups = this.laberinto.posicionesPickUp;
       this.tengoLlave = false;
 
@@ -141,6 +149,7 @@ class MyScene extends THREE.Scene {
         else if (pickup instanceof Chimenea) nombre = '🔥 Chimenea';
         else if (pickup instanceof Campana) nombre = '🔔 Campana';
         else if (pickup instanceof Reno) nombre = '🦌 Reno';
+        else if (pickup instanceof BastonCaramelo ) nombre = '🍬 Baston Caramelo'
         if (nombre) {
           this.pickupStatus.push({ nombre, collected: false, objeto: pickup });
         }
@@ -262,24 +271,10 @@ class MyScene extends THREE.Scene {
           }
       });
 
-
-      window.addEventListener('keyup', (e) => {
-        if(e.key === 'Escape' && this.pointerLocker?.isLocked) {
-          this.pointerLocker.unlock();
-        }
-      }); 
-
-
-
       this.jugador = new Player();
       this.jugador.position.copy(posIncio);
       this.add(this.jugador);
-
-      // Puerta de salida
-      this.puerta = new Puerta();
-      this.puerta.position.copy(posFinal);
-      this.add(this.puerta);
-      this.puertaAbierta = false;
+      this.laberinto._jugador = this.jugador;
 
       // Suelo y ambiente
       this.createNieve(500, anchoTotal, largoTotal);
@@ -408,6 +403,9 @@ class MyScene extends THREE.Scene {
         } else if (pickup instanceof Reno) {
           tipoEncontrado = '🦌 Reno';
           console.log('¡Has recogido al reno!');
+        } else if (pickup instanceof BastonCaramelo) {
+          tipoEncontrado = '🍬 Baston Caramelo';
+          console.log("¡Has recogido el Bastón de Caramelo");
         }
 
         if (tipoEncontrado && this.pickupStatus) {
@@ -445,6 +443,42 @@ class MyScene extends THREE.Scene {
     }
   }
 
+  mostrarPantallaFinal() {
+    this.juegoTerminado = true;
+
+    const pantalla = document.createElement('div');
+    pantalla.style.cssText = `
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        color: white;
+        font-family: Arial, sans-serif;
+    `;
+    pantalla.innerHTML = `
+        <h1 style="font-size: 48px; color: #ffd700;">🎄 ¡Feliz Navidad! 🎄</h1>
+        <p style="font-size: 24px; margin-top: 20px;">Has completado el laberinto</p>
+        <button onclick="location.reload()" style="
+            margin-top: 30px;
+            padding: 12px 30px;
+            font-size: 18px;
+            background: #ffd700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: black;
+        ">Jugar de nuevo</button>
+    `;
+    document.body.appendChild(pantalla);
+
+    if (this.pointerLocker?.isLocked) this.pointerLocker.unlock();
+  }
+
   /********************************
    * ABRIR PUERTA (con llave)
    ********************************/
@@ -462,8 +496,8 @@ class MyScene extends THREE.Scene {
     const distanciaJugadorSalida = this.jugador.position.distanceTo(posSalida);
     if (distanciaJugadorSalida < distanciaApertura) {
       this.puerta.abrirPuerta();
-      this.puertaAbierta = true;
       console.log('🚪 Puerta abierta!');
+      this.mostrarPantallaFinal();
     }
   }
 
@@ -693,7 +727,10 @@ class MyScene extends THREE.Scene {
     this.crosshair.style.display = this.modoRaton ? 'block' : 'none';
 
     if(this.modoRaton){
-      if(this.pointerLocker && !this.pointerLocker.isLocked) this.pointerLocker.lock();
+      setTimeout(() => {
+        if(this.pointerLocker && !this.pointerLocker.isLocked)
+          this.pointerLocker.lock();
+        }, 100);
     }else{
       if(this.pointerLocker?.isLocked) this.pointerLocker.unlock();
     }
@@ -754,6 +791,8 @@ actualizarCamara() {
 
 
   update() {
+    if( this.juegoTerminado ) return;
+
     if (!this.camaraActiva) {
       requestAnimationFrame(() => this.update());
       return;

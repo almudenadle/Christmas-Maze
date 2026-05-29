@@ -6,6 +6,7 @@ import { Regalo } from '../pickups/regalo/regalo.js';
 import { Chimenea } from '../pickups/chimenea/chimenea.js';
 import { Campana } from '../pickups/campana/campana.js';
 import { Reno } from '../pickups/reno/reno.js';
+import { BastonCaramelo } from '../pickups/bastonCaramelo/bastonCaramelo.js'
 
 
 class Laberinto extends THREE.Object3D {
@@ -19,6 +20,7 @@ class Laberinto extends THREE.Object3D {
   static CHIMENEA = "C";
   static CAMPANA = "B"; //Ponemos b de bell pq la c ya esta
   static RENOS = "N";
+  static BASTON = "P";
   
   constructor (archivo, sincronizacion=null) {
     super();
@@ -147,6 +149,18 @@ class Laberinto extends THREE.Object3D {
               this.posicionesPickUp.push(this.reno);
               this.renosPatrulla.push(this.reno);
               break;
+            
+              case Laberinto.BASTON :
+                this.fB = fila;
+                this.cB = columna;
+
+                unBloque = new BastonCaramelo();
+                unBloque.scale.set(0.5,0.5,0.5);
+                unBloque.position.set(columna*this.anchoBloque,0.15, fila*this.anchoBloque);
+                this.add(unBloque);
+                this.posicionesPickUp.push(unBloque);
+                break;
+
           } 
         }
       }
@@ -190,7 +204,17 @@ class Laberinto extends THREE.Object3D {
       return;
     }else if( f == this.fC && c == this.cC){
       return;
-    }else if( f == this.filaC && c == this.columnaC) return;
+    }else if( f == this.filaC && c == this.columnaC){
+      return;
+    }else if( f == this.fB && c == this.cB) return;
+
+    if(this._jugador){
+       const { fila, columna } = this.getCeldaFromMundo(
+            this._jugador.position.x,
+            this._jugador.position.z
+        );
+        if (f == fila && c == columna) return;
+    }
     
     const celda = this.laberintoMatriz[f][c];
     return celda !== 'X' && celda !== 'E';
