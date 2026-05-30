@@ -496,10 +496,12 @@ class MyScene extends THREE.Scene {
     const distanciaApertura = 10.5;
     const posSalida = this.laberinto.getPosFinal();
     const distanciaJugadorSalida = this.jugador.position.distanceTo(posSalida);
+    console.log('Distancia a la puerta:', distanciaJugadorSalida);
     if (distanciaJugadorSalida < distanciaApertura) {
       this.puerta.abrirPuerta();
+      this.puertaAbierta = true;
       console.log('🚪 Puerta abierta!');
-      this.mostrarPantallaFinal();
+      this.esperando = true;
     }
   }
 
@@ -810,6 +812,15 @@ actualizarCamara() {
       this.actualizarCamara();
     }
     if (this.puertaAbierta && this.puerta) this.puerta.update();
+    if (this.esperando  && this.puerta){
+        const rotActual = this.puerta.puertaInterior.rotation.y;
+        const rotObj = this.puerta.rotacionObjetivo;
+        if (Math.abs(rotActual - rotObj) < 0.05) {
+            this.esperandoPantallaFinal = false;
+            this.mostrarPantallaFinal();
+        }
+    }
+
     if (this.laberinto) this.laberinto.update();
 
     if (this.pickups) {
