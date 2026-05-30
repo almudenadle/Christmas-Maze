@@ -6,6 +6,24 @@ class Muro extends THREE.Object3D {
     static _colorTronco = Muro._loader.load("../../imgs/Bark014_1K-JPG_Color.jpg");
     static _rugosidadTronco = Muro._loader.load("../../imgs/Bark014_1K-JPG_Roughness.jpg");
     
+    static _matTronco = null;
+    static _matPoste = null;
+    static _matCorte = null;
+    static _matNieve = null;
+    static _geoBombilla = new THREE.SphereGeometry(0.045, 6, 6);
+    static _matBombilla = null;
+    static _crearMatBombilla() {
+        const colores = [0xFF2222, 0x22BB22, 0xFFDD00, 0x2266FF, 0xFF8800];
+        return colores.map(color => new THREE.MeshPhysicalMaterial({
+            color: color,
+            emissive: color,
+            emissiveIntensity: 2.0,
+            roughness: 0.2,
+            metalness: 0.1,
+            transmission: 0.4,
+            thickness : 0.1
+        }))
+    }
 
     constructor(ancho = 1, alto = 2, profundidad = 1,esVertical = false, esHorizontal = false) {
         super();
@@ -30,16 +48,20 @@ class Muro extends THREE.Object3D {
     }
 
     createTroncos(){
-        const materialTronco = new THREE.MeshStandardMaterial({
-            color: 0x6B3C1E,
-            roughness: 0.9,
-            metalness: 0.0,
-            map : Muro._colorTronco,
-            bumpMap : Muro._bumpTronco,
-            bumpScale : 1.5,
-            roughnessMap : Muro._rugosidadTronco
-        });
-        
+        if(!Muro._matTronco){
+            Muro._matTronco = new THREE.MeshStandardMaterial({
+                color: 0x6B3C1E,
+                roughness: 0.9,
+                metalness: 0.0,
+                map : Muro._colorTronco,
+                bumpMap : Muro._bumpTronco,
+                bumpScale : 1.5,
+                roughnessMap : Muro._rugosidadTronco
+            });
+        }
+
+        const materialTronco = Muro._matTronco;
+
         const altura = this._alto;
         const radio = altura * 0.14;
         const longitud = this._profundidad;
@@ -79,26 +101,19 @@ class Muro extends THREE.Object3D {
     }
     
     createLuces() {
-        const colores = [0xFF2222, 0x22BB22, 0xFFDD00, 0x2266FF, 0xFF8800];
-        const geoBombilla = new THREE.SphereGeometry(0.045, 6, 6);
+        if(!Muro._matBombilla){
+            Muro._matBombilla = Muro._crearMatBombilla();
+        }
         const numLuces = 5;
-
+        const colores = [0xFF2222, 0x22BB22, 0xFFDD00, 0x2266FF, 0xFF8800];
         for (let i = 0; i < numLuces; i++) {
             const color = colores[i % colores.length];
-
-            const matBombilla = new THREE.MeshStandardMaterial({
-                color: color,
-                emissive: color,
-                emissiveIntensity: 2.0,
-                roughness: 0.2,
-                metalness: 0.1,
-            });
 
             const xPos = -this._ancho * 0.4 + i * (this._ancho * 0.8 / (numLuces - 1));
             const yPos = this._alto * 0.55 + Math.sin(i * 1.3) * this._alto * 0.12;
             const zPos = this._profundidad * 0.52;
 
-            const bombilla = new THREE.Mesh(geoBombilla, matBombilla);
+            const bombilla = new THREE.Mesh(Muro._geoBombilla, Muro._matBombilla[i]);
             bombilla.position.set(xPos, yPos, zPos);
             this.add(bombilla);
 
@@ -116,22 +131,30 @@ class Muro extends THREE.Object3D {
     
 
     createEsquina(){
-        const materialPoste = new THREE.MeshStandardMaterial({
-            color: 0x5C3317,
-            roughness: 0.9,
-            metalness: 0.0,
-            map : Muro._colorTronco,
-            bumpMap : Muro._bumpTronco,
-            bumpScale : 1.5,
-            roughnessMap : Muro._rugosidadTronco
-        });
-        const materialCorte = new THREE.MeshStandardMaterial({
-            color: 0x9A5830,
-            roughness: 0.85,
-            metalness: 0.0,
-            bumpMap : Muro._bumpTronco,
-            bumpScale : 0.8
-        });
+        if(!Muro._matPoste){
+            Muro._matPoste = new THREE.MeshStandardMaterial({
+                color: 0x5C3317,
+                roughness: 0.9,
+                metalness: 0.0,
+                map : Muro._colorTronco,
+                bumpMap : Muro._bumpTronco,
+                bumpScale : 1.5,
+                roughnessMap : Muro._rugosidadTronco
+            });
+        }
+
+        if(!Muro._matCorte){
+            Muro._matCorte = new THREE.MeshStandardMaterial({
+                color: 0x9A5830,
+                roughness: 0.85,
+                metalness: 0.0,
+                bumpMap : Muro._bumpTronco,
+                bumpScale : 0.8
+            });
+        }
+
+        const materialPoste = Muro._matPoste;
+        const materialCorte = Muro._matCorte;
 
         const radio = this._ancho * 0.45;
         const geometriaPoste = new THREE.CylinderGeometry(radio, radio * 1.05, this._alto, 10);
@@ -147,11 +170,13 @@ class Muro extends THREE.Object3D {
     }
 
     createNieve(){
-        const materialNieve = new THREE.MeshStandardMaterial({
-            color: 0xDDEEFF,
-            roughness: 1.0,
-            metalness: 0.0
-        })
+        if(!Muro._matNieve){
+            Muro._matNieve = new THREE.MeshStandardMaterial({
+                color: 0xDDEEFF,
+                roughness: 1.0,
+                metalness: 0.0
+            })
+        }
 
         const geometriaNieve = new THREE.SphereGeometry(
             this._ancho * 0.52, 
@@ -159,6 +184,8 @@ class Muro extends THREE.Object3D {
             0, Math.PI*2, 
             0, Math.PI/2
         );
+
+        const materialNieve = Muro._matNieve;
 
         const nieve = new THREE.Mesh(geometriaNieve,materialNieve);
         nieve.scale.set(1,0.3,1);
