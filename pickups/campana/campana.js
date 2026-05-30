@@ -47,11 +47,7 @@ class Campana extends THREE.Object3D {
         ]
 
         var geometria = new THREE.LatheGeometry(puntos, 32);
-        // var material = new THREE.MeshPhongMaterial({
-        //     color: 0xFFD700,
-        //     shininess: 120,
-        //     side: THREE.DoubleSide
-        // });
+
 
         var material = new THREE.MeshStandardMaterial({
             color: 0xFFD700,

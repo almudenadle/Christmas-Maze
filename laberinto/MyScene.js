@@ -1,12 +1,9 @@
 // MyScene.js
-// Clases de la biblioteca
 import * as THREE from 'three'
 import { GUI } from 'gui'
 import { TrackballControls } from 'trackball'
 import { PointerLockControls } from '../libs/PointerLockControls.js'
 import { RectAreaLightUniformsLib } from '../libs/RectAreaLightUniformsLib.js'
-
-// Clases de mi proyecto
 import { Laberinto } from './Laberinto.js'
 import { coponieve } from '../pickups/coponieve/coponieve.js'
 import { Regalo } from '../pickups/regalo/regalo.js'
@@ -34,7 +31,7 @@ class MyScene extends THREE.Scene {
     this.skipNextPointerLock = false;
     
     this.createLights();
-    this.lightsEnabled = false; // laberinto starts dark until Chimenea is picked
+    this.lightsEnabled = false; // hasta que se coge la chimenea estan apagadas
 
     window.addEventListener('click', (e) => {
       if (this.pointerLocker?.isLocked){
@@ -113,7 +110,7 @@ class MyScene extends THREE.Scene {
     this.axis = new THREE.AxesHelper(0.1);
     this.add(this.axis);
     
-    // --- Panel de estado de pickups ---
+    //Pickups UI
     this.createPickupUI();
     
     // Cargar laberinto
@@ -140,7 +137,7 @@ class MyScene extends THREE.Scene {
       this.pickups = this.laberinto.posicionesPickUp;
       this.tengoLlave = false;
 
-      // --- Inicializar estado de pickups ---
+      //nicializar estado de pickups 
       this.pickupStatus = [];
       this.pickups.forEach(pickup => {
         let nombre = '';
@@ -171,12 +168,8 @@ class MyScene extends THREE.Scene {
               this.obstaculos.push(hijo);
           }
       });
-      
-      // AÑADIR ESTO TEMPORALMENTE:
-      console.log('Meshes pickup excluidos:', meshesPickup.size);
-      console.log('Obstáculos totales:', this.obstaculos.length);
 
-      // --- Crear tres RectAreaLights pequeñas enfocadas a la campana (si existe) ---
+      //Creamos tres RectAreaLights pequeñas enfocadas a la campana (si existe)
       try {
         const campanaPickup = this.pickups.find(p => p instanceof Campana);
         if (campanaPickup) {
@@ -185,7 +178,6 @@ class MyScene extends THREE.Scene {
 
           // colores: rojo, verde, azul
           const colores = [0xff0000, 0x00ff00, 0x0000ff];
-          // offsets relativos a la campana para situar las luminarias cerca de ella
           const offsets = [
             new THREE.Vector3(-0.5, 0.8, 0.3),
             new THREE.Vector3(0.6, 0.8, 0.3),
@@ -194,7 +186,6 @@ class MyScene extends THREE.Scene {
 
           this.campanaLights = [];
           for (let i = 0; i < 3; i++) {
-            // ancho y alto pequeños para afectar solo la campana
             const rect = new THREE.RectAreaLight(colores[i], 1.0, 0.6, 0.4);
             rect.power = 10; 
             const pos = targetPos.clone().add(offsets[i]);
@@ -203,7 +194,7 @@ class MyScene extends THREE.Scene {
 
             this.add(rect);
 
-            // panel visible para que la luz no se vea como un rectángulo vacío
+            // panel visible para que la luz no se vea como un rectángulo vacío desde arriba
             const panelGeo = new THREE.PlaneGeometry(0.6, 0.4);
             const panelMat = new THREE.MeshBasicMaterial({
               color: colores[i],
@@ -222,24 +213,23 @@ class MyScene extends THREE.Scene {
 
             this.campanaLights.push(rect);
           }
-          console.log('Tres RectAreaLights creadas para la campana en', targetPos);
         }
       } catch (err) {
         console.warn('No se pudo crear RectAreaLights para la campana:', err);
       }
 
-      // --- Crear un SpotLight para destacar la Chimenea (si existe) ---
+      //rear un SpotLight para destacar la Chimenea (si existe) 
       try {
         const chimeneaPickup = this.pickups.find(p => p instanceof Chimenea);
         if (chimeneaPickup) {
           const spotLight = new THREE.SpotLight(0xfcfcfc);
-          spotLight.power = 350; // 350 lúmenes
-          spotLight.angle = Math.PI / 6; // pi/6 a cada lado
-          spotLight.penumbra = 1; // transición suave
+          spotLight.power = 350; 
+          spotLight.angle = Math.PI / 6; 
+          spotLight.penumbra = 1; 
 
           const posCh = new THREE.Vector3();
           chimeneaPickup.getWorldPosition(posCh);
-          spotLight.position.set(posCh.x, posCh.y + 5, posCh.z); // situada 5m sobre la chimenea
+          spotLight.position.set(posCh.x, posCh.y + 5, posCh.z);
 
           // Apuntar hacia la chimenea
           spotLight.target = chimeneaPickup;
@@ -247,7 +237,6 @@ class MyScene extends THREE.Scene {
 
           this.chimeneaSpot = spotLight;
           this.chimeneaSpotDefaultPower = spotLight.power;
-          console.log('SpotLight creada para la chimenea en', posCh);
         }
       } catch (err) {
         console.warn('No se pudo crear SpotLight para la chimenea:', err);
@@ -308,7 +297,7 @@ class MyScene extends THREE.Scene {
     this.uiDiv = document.createElement('div');
     this.uiDiv.style.position = 'absolute';
     this.uiDiv.style.top = '20px';
-    this.uiDiv.style.left = '20px';        // Cambiado a izquierda
+    this.uiDiv.style.left = '20px';        
     this.uiDiv.style.backgroundColor = 'rgba(82, 90, 124, 0.7)';
     this.uiDiv.style.color = 'white';
     this.uiDiv.style.fontFamily = 'Arial, sans-serif';
@@ -318,7 +307,7 @@ class MyScene extends THREE.Scene {
     this.uiDiv.style.border = '1px solid #aaa';
     this.uiDiv.style.backdropFilter = 'blur(4px)';
     this.uiDiv.style.zIndex = '100';
-    this.uiDiv.style.pointerEvents = 'none'; // para no bloquear clics
+    this.uiDiv.style.pointerEvents = 'none';
     this.uiDiv.style.minWidth = '180px';
     document.body.appendChild(this.uiDiv);
 
@@ -420,7 +409,7 @@ class MyScene extends THREE.Scene {
 
           // Si recogemos la chimenea, habilitar las luces del laberinto
           if (pickup instanceof Chimenea) {
-            this.tengoLlave = this.tengoLlave || false; // no afecta pero mantiene semántica
+            this.tengoLlave = this.tengoLlave || false; 
             this.lightsEnabled = true;
             this.enableLights();
             console.log('🔥 Chimenea recogida: iluminando el laberinto');
@@ -481,12 +470,10 @@ class MyScene extends THREE.Scene {
     if (this.pointerLocker?.isLocked) this.pointerLocker.unlock();
   }
 
-  /********************************
-   * ABRIR PUERTA (con llave)
-   ********************************/
+  //Abrir la puerta si tengo la llave
   abrirPuerta() {
     if (!this.jugador || !this.laberinto) return;
-    // Requerir que se hayan recogido todos los pickups (si los hay)
+    // Requerir que se hayan recogido todos los pickups 
     const total = this.pickupStatus ? this.pickupStatus.length : 0;
     const collected = this.pickupStatus ? this.pickupStatus.filter(i => i.collected).length : 0;
     if (total > 0 && collected < total) {
@@ -505,9 +492,7 @@ class MyScene extends THREE.Scene {
     }
   }
 
-    /********************************
-   * ABRIR REGALO
-   ********************************/
+    //Animación de apertura del regalo y aparición de la llave
   _abrirRegalo(regalo) {
     const luzRegalo = new THREE.PointLight(0xffd700, 0, 3);
     const posRegalo = new THREE.Vector3();
@@ -549,9 +534,7 @@ class MyScene extends THREE.Scene {
     });
   }
 
-  /********************************
-   * CLICK SOBRE PUERTA
-   ********************************/
+  // Click en el pomo 
   isKnobClick(event) {
     if (!this.puerta || !this.camaraJugador) return false;
     this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -579,7 +562,6 @@ class MyScene extends THREE.Scene {
     let hitKnob = false;
     for (let inter of intersects) {
       let obj = inter.object;
-      // ascend the parent chain to see if any ancestor was marked as knob
       while (obj) {
         if (obj.userData && obj.userData.isKnob) {
           hitKnob = true;
@@ -594,9 +576,7 @@ class MyScene extends THREE.Scene {
     }
   }
 
-  /********************************
-   * NIEVE CAYENDO
-   ********************************/
+  //nieve cayendo
   createNieve(n = 500, anchoX = 2, anchoZ = 2, centroX = 0, centroZ = 0) {
     const geo = new THREE.BufferGeometry();
     const pos = new Float32Array(n * 3);
@@ -649,7 +629,6 @@ class MyScene extends THREE.Scene {
   createLights() {
     RectAreaLightUniformsLib.init();
     
-    // Start with lights off; will be enabled when Chimenea is picked
     this.ambientLight = new THREE.AmbientLight('white', 0);
     this.add(this.ambientLight);
     this.pointLight = new THREE.SpotLight(0xffffff);
@@ -774,7 +753,6 @@ actualizarCamara() {
             this.jugador.position.y + 1.0,
             this.jugador.position.z
         );
-        // Restaurar rotación completa, no solo Y
         this.camaraJugador.rotation.set(0, this.jugador.angulo, 0,'YXZ');
     }
 }

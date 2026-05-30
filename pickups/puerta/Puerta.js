@@ -11,14 +11,8 @@ class Puerta extends THREE.Object3D {
     super();
     this.abierta = false;
     this.rotacionObjetivo = 0;
-    //this.createRosco();
     this.createPuerta();
     this.cargarKnob();
-    /*
-    setInterval(() => {
-      this.alternarPuerta();
-    }, 2000);
-    */
   }
 
 
@@ -61,7 +55,7 @@ class Puerta extends THREE.Object3D {
     const loader = new THREE.TextureLoader();
 
     // Mapa de relieve para que la puerta exterior no se vea plana
-    //uso tambien las hojas pq como la puerta es de color rojo nada mas pues con cualquier textura nos vale y asi no necesitamos cargar mas
+    //uso la misma que la de la puerta y asi es todo un poco más coherente, pero se podria usar otra distinta
     const texturaRelievePuertaExterior = loader.load('../../imgs/patron.jpg');
     texturaRelievePuertaExterior.wrapS = THREE.RepeatWrapping;
     texturaRelievePuertaExterior.wrapT = THREE.RepeatWrapping;
@@ -74,7 +68,7 @@ class Puerta extends THREE.Object3D {
       roughness: 0.7,
       metalness: 0.05
     });
-    
+
     this.marcoPuerta = new THREE.Mesh(geometriaMarcoPuerta, materialPuerta);
 
 
@@ -125,7 +119,6 @@ class Puerta extends THREE.Object3D {
 
     this.puertaInterior = new THREE.Mesh(geometriaPuerta, materialPuertaInterior);
 
-    //como movimos la geometria,movemos el mesh
     this.puertaInterior.position.x = radioArcoInterior;
 
     //movemos la puerta un poco hacia el lado
@@ -158,10 +151,8 @@ class Puerta extends THREE.Object3D {
       objectLoader.load('../../models/knob/Knob.obj', (object) => {
         object.scale.set(0.020, 0.020, 0.020);
         //rotamos el knob para que quede orientado como una manilla de puerta
-        //si pusiesemos pi/2 quedaria del reves,asi que no ponemos eso
         object.rotation.x = Math.PI / 2;
         object.rotation.z = Math.PI;
-        //lo situamos acorde a la puerta, para eso lo movemos a la mitad de la altura de la puerta y un poco hacia afuera
         object.position.set(-0.45, 0.46, 0.17);
 
         // Marcamos el objeto del knob para poder identificarlo en raycasts
@@ -228,31 +219,23 @@ class Puerta extends THREE.Object3D {
     const geometriaRosco = new THREE.ExtrudeGeometry(formaRosco, opcionesBarrido);
 
 
-    // this.texturaRosco = new THREE.TextureLoader().load('../../imgs/hojas.jpg');
+    this.texturaRosco = new THREE.TextureLoader().load('../../imgs/hojas.jpg');
+    this.texturaRosco.wrapT = THREE.RepeatWrapping;
+    this.texturaRosco.wrapS = THREE.RepeatWrapping;
+    this.texturaRosco.repeat.set(8, 10);
 
-    // this.texturaRosco.wrapT = THREE.RepeatWrapping;
-    // this.texturaRosco.wrapS = THREE.RepeatWrapping;
-    // this.texturaRosco.repeat.set(8, 10);
-    // 1. Cargamos la textura de color 
-this.texturaRosco = new THREE.TextureLoader().load('../../imgs/hojas.jpg');
-this.texturaRosco.wrapT = THREE.RepeatWrapping;
-this.texturaRosco.wrapS = THREE.RepeatWrapping;
-this.texturaRosco.repeat.set(8, 10);
+    // Cargamos la textura de relieve 
+    this.texturaRelieveRosco = new THREE.TextureLoader().load('../../imgs/hojas_bump.jpg');
+    this.texturaRelieveRosco.wrapT = THREE.RepeatWrapping;
+    this.texturaRelieveRosco.wrapS = THREE.RepeatWrapping;
+    this.texturaRelieveRosco.repeat.set(8, 10);
 
-// 2. Cargamos la textura de relieve 
-this.texturaRelieveRosco = new THREE.TextureLoader().load('../../imgs/hojas_bump.jpg'); 
-this.texturaRelieveRosco.wrapT = THREE.RepeatWrapping;
-this.texturaRelieveRosco.wrapS = THREE.RepeatWrapping;
-this.texturaRelieveRosco.repeat.set(8, 10); 
-
-// 3. Creamos el material combinando ambos canales
-const materialRosco = new THREE.MeshStandardMaterial({ 
-  map: this.texturaRosco,               
-  bumpMap: this.texturaRelieveRosco,    
-  bumpScale: 4                     
-});
-
- //   const materialRosco = new THREE.MeshStandardMaterial({ map: this.texturaRosco });
+    // Creamos el material combinando ambos canales
+    const materialRosco = new THREE.MeshStandardMaterial({
+      map: this.texturaRosco,
+      bumpMap: this.texturaRelieveRosco,
+      bumpScale: 4
+    });
 
     this.mallaRosco = new THREE.Mesh(geometriaRosco, materialRosco);
 
@@ -270,8 +253,8 @@ const materialRosco = new THREE.MeshStandardMaterial({
 
     const matRojo = new THREE.MeshStandardMaterial({
       color: 0xff0000,
-      metalness: 0.9, 
-      roughness: 0.1 
+      metalness: 0.9,
+      roughness: 0.1
     });
     const matOro = new THREE.MeshStandardMaterial({
       color: 0xffd700,
@@ -281,29 +264,29 @@ const materialRosco = new THREE.MeshStandardMaterial({
     const materiales = [matRojo, matOro];
 
     let roscoBrush = new CSG.Brush(this.mallaRosco.geometry, this.mallaRosco.material);
-    
+
     roscoBrush.position.copy(this.mallaRosco.position);
     roscoBrush.rotation.copy(this.mallaRosco.rotation);
     roscoBrush.scale.copy(this.mallaRosco.scale);
     roscoBrush.updateMatrixWorld();
 
     let evaluador = new CSG.Evaluator();
-    
-    const numBolas = 8; 
+
+    const numBolas = 8;
 
     for (let i = 0; i < numBolas; i++) {
       const t = i / numBolas;
       const posicion = camino.getPointAt(t);
       const material = materiales[i % materiales.length];
-      
+
       const bolaBrush = new CSG.Brush(geoBola, material);
 
       bolaBrush.position.set(
-        this.mallaRosco.position.x + (posicion.x * 0.3), 
-        this.mallaRosco.position.y + (posicion.y * 0.3), 
+        this.mallaRosco.position.x + (posicion.x * 0.3),
+        this.mallaRosco.position.y + (posicion.y * 0.3),
         this.mallaRosco.position.z + 0.05
       );
-      
+
       bolaBrush.updateMatrixWorld();
 
       roscoBrush = evaluador.evaluate(roscoBrush, bolaBrush, CSG.ADDITION);

@@ -9,7 +9,7 @@ class Reno extends THREE.Object3D {
   }
 
   createReno() {
-    // 1. MATERIALES
+    //MATERIALES
     const matCuerpo = new THREE.MeshStandardMaterial({ color: 0x8B5A2B}); 
     const matOscuro = new THREE.MeshStandardMaterial({ color: 0x3A2311 }); 
     const matNariz = new THREE.MeshStandardMaterial({ color: 0xff0000 }); 
@@ -103,7 +103,6 @@ class Reno extends THREE.Object3D {
     const geoOjo = new THREE.BoxGeometry(0.03, 0.03, 0.03);
     
     const ojoIzq = new THREE.Mesh(geoOjo, matOjo);
-    // Lo sacamos un poco en X, lo subimos en Y y lo adelantamos en Z
     ojoIzq.position.set(0.085, 0.28, 0.2); 
     this.cuelloGroup.add(ojoIzq);
 
@@ -155,12 +154,12 @@ class Reno extends THREE.Object3D {
   update() {
     const tiempo = Date.now() * 0.005;
 
-    // 1. Animar la cabeza asintiendo
+    //Animar la cabeza asintiendo
     if (this.cuelloGroup) {
       this.cuelloGroup.rotation.x = Math.sin(tiempo * 0.5) * 0.05; 
     }
 
-    // 2. Animar los 2 grados de libertad de las patas
+    //Animar los 2 grados de libertad de las patas
     this.piernasArticuladas.forEach((pierna) => {
       pierna.hombro.rotation.x = Math.sin(tiempo + pierna.desfase) * 0.4;
 

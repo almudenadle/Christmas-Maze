@@ -6,8 +6,6 @@ class Chimenea extends THREE.Object3D {
 
   constructor(gui = null, titleGui = " ") {
     super();
-
-    // Se crea la parte de la interfaz que corresponde a la chimenea
     if (gui) this.createGUI(gui, titleGui);
 
     // Material
@@ -22,7 +20,7 @@ class Chimenea extends THREE.Object3D {
 
     this.materialColumna = new THREE.MeshStandardMaterial({ map: this.texturaColumna });
 
-    var tamano = 0.1;   // Las unidades son metros
+    var tamano = 0.1;   
 
     // Construimos cuerpo 
     var cuerpoInt = this.createCuerpo(tamano * 0.8, tamano * 0.4, tamano * 1.2);
@@ -123,11 +121,7 @@ class Chimenea extends THREE.Object3D {
 
     for (let i = 0; i < 3; i++) {
       let geoLlama = new THREE.ConeGeometry(tamano * radios[i], tamano * alturas[i], 4);
-
-      // Movemos la geometría para que su centro esté en la base
       geoLlama.translate(0, (tamano * alturas[i]) / 2, 0);
-
-
 
       let matLlama = new THREE.MeshStandardMaterial({
         color: colores[i],
