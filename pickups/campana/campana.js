@@ -14,7 +14,7 @@ class Campana extends THREE.Object3D {
         this.articulacionCampana.add(campana);
 
         this.articulacionBadajo = new THREE.Object3D();
-        this.articulacionBadajo.position.y = -0.1; // cuelga desde la cima
+        this.articulacionBadajo.position.y = -0.1; 
         this.articulacionCampana.add(this.articulacionBadajo);
 
         var badajo = this.createBadajo();
@@ -24,7 +24,7 @@ class Campana extends THREE.Object3D {
         this.maxAnguloMovimiento = Math.PI / 6;
         this.velocidad = 0.01;
         this.anguloActual = 0;
-        this.anguloBadajo = 0;   // ángulo independiente del badajo
+        this.anguloBadajo = 0;  
         this.sentido = 1;
 
         this.scale.set(0.25, 0.25, 0.25);
@@ -113,7 +113,7 @@ class Campana extends THREE.Object3D {
         this.articulacionCampana.rotation.z = this.anguloActual;
 
         const diferencia = this.anguloActual - this.anguloBadajo;
-        this.anguloBadajo += diferencia * 0.08;  // 0.08 = "peso" del badajo
+        this.anguloBadajo += diferencia * 0.08;  
 
         this.articulacionBadajo.rotation.z = this.anguloBadajo - this.anguloActual;
     }
